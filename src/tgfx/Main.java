@@ -2,7 +2,6 @@
  * Copyright (c) 2013 Synthetos LLC
  * Rileyporter@gmail.com
  * www.synthetos.com
- * 
  */
 package tgfx;
 
@@ -53,7 +52,12 @@ import tgfx.ui.gcode.GcodeTabController;
 import tgfx.ui.machinesettings.MachineSettingsController;
 import tgfx.ui.tgfxsettings.TgfxSettingsController;
 import tgfx.ui.tinygconfig.TinyGConfigController;
-
+/**
+ * the <code>Main</code> class is the main JFX screen/stage
+ * It gets kicked off when the TgFX class is run.
+ * @see TgFX
+ * @author Riley, pfarrell
+ */
 public class Main extends Stage implements Initializable, Observer {
 
     public static String OS = System.getProperty("os.name").toLowerCase();
@@ -149,7 +153,6 @@ public class Main extends Stage implements Initializable, Observer {
      */
     private void onConnectActions() {
         try {
-
             Platform.runLater(new Runnable() {
                 @Override
                 public void run() {
@@ -456,9 +459,9 @@ public class Main extends Stage implements Initializable, Observer {
 
     public static void print(String msg){
         if(TgfxSettingsController.settingDebugBtn.isSelected()){
-            System.out.println(msg);  
+            System.out.println(msg);
+            logger.info(msg);
         }
-
     }
 
     @Override
