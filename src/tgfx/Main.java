@@ -15,7 +15,6 @@ import java.util.Observer;
 import java.util.ResourceBundle;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleIntegerProperty;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Group;
@@ -26,19 +25,12 @@ import javafx.scene.control.Label;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
-import javafx.scene.input.InputEvent;
-import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
-import javafx.scene.input.ScrollEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.shape.Circle;
 import javafx.scene.text.Text;
 import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
-
-
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
 import jfxtras.labs.dialogs.MonologFX;
@@ -57,7 +49,6 @@ import tgfx.system.Machine;
 import tgfx.system.StatusCode;
 import tgfx.tinyg.CommandManager;
 import tgfx.tinyg.TinygDriver;
-import tgfx.ui.gcode.GcodeHistory;
 import tgfx.ui.gcode.GcodeTabController;
 import tgfx.ui.machinesettings.MachineSettingsController;
 import tgfx.ui.tgfxsettings.TgfxSettingsController;
@@ -71,13 +62,7 @@ public class Main extends Stage implements Initializable, Observer {
     //if a buildVersion changed message comes in it will not refire onConnect2() again and again
     static final Logger logger = Logger.getLogger(Main.class);
     private TinygDriver tg = TinygDriver.getInstance();
-    private String PROMPT = "tinyg>";
-    private GcodeHistory gcodeCommandHistory = new GcodeHistory();
     final static ResourceBundle rb = ResourceBundle.getBundle("version");   //Used to track build date and build number
-    public final static String LOGLEVEL = "OFF";
-    //public final static String LOGLEVEL = "INFO";
-    @FXML
-    private Circle cursor;
     @FXML
     private Button Connect;
     @FXML
@@ -108,6 +93,11 @@ public class Main extends Stage implements Initializable, Observer {
     VBox topvbox, positionsVbox, tester, consoleVBox;
     @FXML
     private TabPane topTabPane;
+/**
+ * default constructor
+ */    
+    public Main() {
+    }
 
     public static String getOperatingSystem() {
         if (isWindows()) {
@@ -142,80 +132,6 @@ public class Main extends Stage implements Initializable, Observer {
     public void testMessage(String message) {
         Main.print("Message Hit");
 
-    }
-
-    public Main() {
-        //Setup Logging for TinyG Driver
-        if (LOGLEVEL.equals("INFO")) {
-//            logger.setLevel(org.apache.log4j.Level.INFO);
-        } else if (LOGLEVEL.equals("ERROR")) {
-            logger.setLevel(org.apache.log4j.Level.ERROR);
-        } else {
-            logger.setLevel(org.apache.log4j.Level.OFF);
-        }
-    }
-
-    @FXML
-    void handleRemoteListener(ActionEvent evt) {
-//        if (tg.isConnected()) {
-//            tgfx.Main.postConsoleMessage("[+]Remote Monitor Listening for Connections....");
-//            Task SocketListner = this.initRemoteServer(listenerPort.getText());
-//
-//            new Thread(SocketListner).start();
-//            btnRemoteListener.setDisable(true);
-//        } else {
-//            Main.print("[!] Must be connected to TinyG First.");
-//            tgfx.Main.postConsoleMessage("[!] Must be connected to TinyG First.");
-//        }
-    }
-
-    @FXML
-    void handleMouseScroll(ScrollEvent evt) {
-//        if (evt.getDeltaX() == 0 && evt.getDeltaY() == 40) {
-        //Mouse Wheel Up
-//        Draw2d.setMagnification(true);
-//        tgfx.Main.postConsoleMessage("[+]Zooming in " + String.valueOf(Draw2d.getMagnification()) + "\n");
-//
-//
-////        } else if (evt.getDeltaX() == 0 && evt.getDeltaY() == -40) {
-////            //Mouse Wheel Down
-////            Draw2d.setMagnification(false);
-////            tgfx.Main.postConsoleMessage("[+]Zooming out " + String.valueOf(Draw2d.getMagnification()) + "\n");
-////        }
-//
-//
-//        if (gcodePane.getChildren().size() > 0) {
-//            Iterator ii = gcodePane.getChildren().iterator();
-//
-//            while (ii.hasNext()) {
-//                Line tmpl = (Line) ii.next();
-//                tmpl.setStartX(tmpl.getStartX() + 20);
-//                tmpl.setStartY(tmpl.getStartY() + 20);
-//                tmpl.setEndX(tmpl.getEndY() + 20);
-//                tmpl.setEndY(tmpl.getEndY() + 20);
-//
-////                Path p = new Path();
-////                p.setStroke(Color.BLUE);
-////                p.getElements().add(tmpl);
-//
-//            }
-//        }
-//        //        previewPane.setScaleX(Draw2d.getMagnification());
-//        //        previewPane.setScaleY(Draw2d.getMagnification());
-//        //        canvsGroup.setScaleX(Draw2d.getMagnification());
-//        //        canvsGroup.setScaleY(Draw2d.getMagnification());
-    }
-
-//    private void reDrawPreview() {
-//        for (Node n : canvsGroup.getChildren()) {
-//            Line nd = (Line) n;
-//            nd.setStrokeWidth(Draw2d.getStrokeWeight());
-//        }
-////        tgfx.Main.postConsoleMessage("[+]2d Preview Stroke Width: " + String.valueOf(Draw2d.getStrokeWeight()) + "\n");
-//    }
-    @FXML
-    private void FXreScanSerial(ActionEvent event) {
-        this.reScanSerial();
     }
 
     private void reScanSerial() {
@@ -324,50 +240,6 @@ public class Main extends Stage implements Initializable, Observer {
         }
     }
 
-    @FXML
-    private void handleConnect(ActionEvent event) throws Exception {
-        //Get a list of serial ports on the system.
-
-        if (serialPorts.getSelectionModel().getSelectedItem() == (null)) {
-            postConsoleMessage("[!]Error Connecting to Serial Port please select a valid port.\n");
-            return;
-        }
-        if (Connect.getText().equals("Connect") && serialPorts.getSelectionModel().getSelectedItem() != (null)) {
-            String serialPortSelected = serialPorts.getSelectionModel().getSelectedItem().toString();
-
-            Main.print("[*]Attempting to Connect to TinyG.");
-
-            if (!tg.initialize(serialPortSelected, 115200)) {  //This will be true if we connected when we tried to!
-                //Our connect attempt failed. 
-                postConsoleMessage("[!]There was an error connecting to " + serialPortSelected + " please verify that the port is not in use.");
-                postConsoleMessage("If you are OSX you need to make sure you have /var/lock created. Open a console (terminal) and type in these 2 commands.\n"
-                        + " sudo mkdir /var/lock\n "
-                        + "sudo chmod a+rw /var/lock\n "
-                        + "If that does not work make sure your port is not open with another application and restart tgFX.");
-            }
-
-            if (tg.isConnected().get()) {
-
-                postConsoleMessage("[*]Connected to " + serialPortSelected + " Serial Port Successfully.\n");
-                Connect.setText("Disconnect");
-
-                /**
-                 * *****************************
-                 * OnConnect Actions Called Here *****************************
-                 */
-                onConnectActions();
-            }
-        } else {
-            tg.disconnect();
-            if (!tg.isConnected().get()) {
-                postConsoleMessage("[+]Disconnected from " + tg.getPortName() + " Serial Port Successfully.\n");
-                Connect.setText("Connect");
-                onDisconnectActions();
-            }
-
-        }
-    }
-
     public void onDisconnectActions() throws IOException, JSONException {
         TinygDriver.getInstance().getMachine().setFirmwareBuild(0.0);
         TinygDriver.getInstance().getMachine().setFirmwareBuild(0.0D);
@@ -390,9 +262,6 @@ public class Main extends Stage implements Initializable, Observer {
         //gcodePane.getChildren().remove(cncMachine);
     }
 
-    @FXML
-    private void handleKeyInput(final InputEvent event) {
-    }
 
     public static void postConsoleMessage(String message) {
         //This allows us to send input to the console text area on the Gcode Tab.
@@ -405,118 +274,6 @@ public class Main extends Stage implements Initializable, Observer {
         });
     }
 
-//    @FXML
-//    private void gcodeProgramClicks(MouseEvent me) {
-//        TextField tField = (TextField) gcodesList.getSelectionModel().getSelectedItem();
-//        if (me.getButton() == me.getButton().SECONDARY) {
-////            tg.write("{\"gc\":\"" + lbl.getText() + "\"}\n");
-//            Main.print("RIGHT CLICKED");
-//
-//
-//        } else if (me.getButton() == me.getButton().PRIMARY && me.getClickCount() == 2) {
-//            Main.print("double clicked");
-//            tField.setEditable(true);
-//
-//            //if (lbl.getParent().getStyleClass().contains("breakpoint")) {
-////                lbl.getParent().getStyleClass().remove("breakpoint");
-////                tgfx.Main.postConsoleMessage("BREAKPOINT REMOVED: " + lbl.getText() + "\n");
-////                Main.print("BREAKPOINT REMOVED");
-////            } else {
-////
-////                Main.print("DOUBLE CLICKED");
-////                lbl.getStyleClass().removeAll(null);
-////                lbl.getParent().getStyleClass().add("breakpoint");
-////                Main.print("BREAKPOINT SET");
-////                tgfx.Main.postConsoleMessage("BREAKPOINT SET: " + lbl.getText() + "\n");
-////            };
-//        }
-//    }
-    @FXML
-    private void handleGuiRefresh() throws Exception {
-        //Refreshed all gui settings from TinyG Responses.
-        if (tg.isConnected().get()) {
-
-            postConsoleMessage("[+]System GUI Refresh Requested....");
-            tg.cmdManager.queryAllHardwareAxisSettings();
-            tg.cmdManager.queryAllMachineSettings();
-            tg.cmdManager.queryAllMotorSettings();
-        } else {
-            postConsoleMessage("[!]TinyG Not Connected.. Ignoring System GUI Refresh Request....");
-        }
-    }
-
-    @FXML
-    private void handleKeyPress(final InputEvent event) throws Exception {
-        //private void handleEnter(ActionEvent event) throws Exception {
-        final KeyEvent keyEvent = (KeyEvent) event;
-        if (keyEvent.getCode().equals(KeyCode.ENTER)) {
-            String command = (input.getText() + "\n");
-            logger.info("Entered Command: " + command);
-            if (!tg.isConnected().get()) {
-                logger.error("TinyG is not connected....\n");
-                postConsoleMessage("[!]TinyG is not connected....\n");
-                input.setPromptText(PROMPT);
-                return;
-            }
-            //TinyG is connected... Proceed with processing command.
-            //This will send the command to get a OK prompt if the buffer is empty.
-            //"{\""+ command.split("=")[0].replace("$", "") + "\":" + command.split("=")[1].trim() + "}\n"
-            if ("".equals(command)) {
-                tg.write(CommandManager.CMD_QUERY_OK_PROMPT);
-            }
-
-            tg.write(command);
-            postConsoleMessage(command.replace("\n", ""));
-            gcodeCommandHistory.addCommandToHistory(command);  //Add this command to the history
-            input.clear();
-            input.setPromptText(PROMPT);
-        } else if (keyEvent.getCode().equals(KeyCode.UP)) {
-            input.setText(gcodeCommandHistory.getNextHistoryCommand());
-//            input.positionCaret(input.lengthProperty().get());
-        } else if (keyEvent.getCode().equals(KeyCode.DOWN)) {
-            input.setText(gcodeCommandHistory.getPreviousHistoryCommand());
-//            input.positionCaret(input.lengthProperty().get());
-        }
-    }
-//    private Task initRemoteServer(String port) {
-//        final String Port = port;
-//        return new Task() {
-//            @Override
-//            protected Object call() throws Exception {
-//                SocketMonitor sm = new SocketMonitor(Port);
-//
-//                Main.print("[+]Trying to start remote monitor.");
-//                return true;
-//            }
-//        };
-//    }
-//    private void updateGuiMachineSettings(String line) {
-//        final String l = line;
-//        Platform.runLater(new Runnable() {
-//            @Override
-//            public void run() {
-//                //We are now back in the EventThread and can update the GUI
-//                try {
-//                    Machine m = TinygDriver.getInstance().m;
-////                    srBuild.setText(String.valueOf(m.getFirmwareBuild()));
-////                    srVer.setText(String.valueOf(m.getFirmwareVersion()));
-////                    gcodePlane.getSelectionModel().select(TinygDriver.getInstance().m.getGcode_select_plane().ordinal());
-////                    gcodeUnitMode.getSelectionModel().select(TinygDriver.getInstance().m.getGcodeUnitMode());
-////                    gcodeCoordSystem.getSelectionModel().select(TinygDriver.getInstance().m.getCoordinateSystem().ordinal());
-////                    gcodePathControl.getSelectionModel().select(TinygDriver.getInstance().m.getGcode_distance_mode().ordinal());
-////                    gcodeDistanceMode.getSelectionModel().select(TinygDriver.getInstance().m.getGcode_distance_mode().ordinal());
-//
-////                    if (m.getCoordinateSystem() != null) {
-////                        srCoord.setText(TinygDriver.getInstance().m.getCoordinateSystem().toString());
-////                    }
-//                } catch (Exception ex) {
-//                    Main.print("[!] Exception in updateGuiMachineSettings");
-//                    Main.print(ex.getMessage());
-//                }
-//            }
-//        });
-//
-//    }
     private int oldRspLine = 0;
 
     @Override
@@ -591,14 +348,12 @@ public class Main extends Stage implements Initializable, Observer {
                         break;
 
                     case ("TINYG_USER_MESSAGE"):
-
                         if (KEY_ARGUMENT.trim().equals("SYSTEM READY")) {
                             //The board has been reset and is ready to re-init our internal tgFX models
                             onDisconnectActions();
                             CncMachinePreview.resetDrawingCoords();
                             onConnectActions();
                         }
-
                         break;
 
                     case ("BUILD_ERROR"):
@@ -672,7 +427,7 @@ public class Main extends Stage implements Initializable, Observer {
                         Main.print("[!]Invalid Routing Key: " + ROUTING_KEY);
                 }
             } catch (IOException | JSONException ex) {
-                java.util.logging.Logger.getLogger(Main.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+                logger.error(ex);
             }
         }
     }
@@ -717,9 +472,6 @@ public class Main extends Stage implements Initializable, Observer {
         tg.resParse.addObserver(this);  //Add the tinygdriver to this observer
         tg.addObserver(this);
         this.reScanSerial();            //Populate our serial ports
-        final Logger logger = Logger.getLogger(Main.class);
-        final Logger resParserLogger = Logger.getLogger(ResponseParser.class);
-        final Logger serialDriverLogger = Logger.getLogger(SerialDriver.class);
         GcodeTabController.setGcodeText("TinyG Disconnected.");
 
         //This disables the UI if we are not connected.

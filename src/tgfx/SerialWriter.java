@@ -1,14 +1,14 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright (c) 2013 Synthetos LLC
+ * Rileyporter@gmail.com
+ * see license for terms
  */
 package tgfx;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import tgfx.tinyg.TinygDriver;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
 import tgfx.ui.gcode.GcodeTabController;
 
 /**
@@ -31,15 +31,6 @@ public class SerialWriter implements Runnable {
     //   public Condition clearToSend = lock.newCondition();
     public SerialWriter(BlockingQueue q) {
         this.queue = q;
-        
-        //Setup Logging for SerialWriter
-        if(Main.LOGLEVEL.equals("INFO")){
-            logger.setLevel(org.apache.log4j.Level.INFO);
-        }else if( Main.LOGLEVEL.equals("ERROR")){
-            logger.setLevel(org.apache.log4j.Level.ERROR);
-        }else{
-            logger.setLevel(org.apache.log4j.Level.OFF);
-        }
     }
 
     public void resetBuffer() {
@@ -57,11 +48,8 @@ public class SerialWriter implements Runnable {
             buffer_available.set(BUFFER_SIZE);
             this.setThrottled(false);
             this.notifyAck();
-            
-            
-          
         } catch (Exception ex) {
-            Logger.getLogger(SerialWriter.class.getName()).log(Level.SEVERE, null, ex);
+            logger.error(ex);
         }
     }
 
@@ -162,7 +150,7 @@ public class SerialWriter implements Runnable {
             }
 
             ser.write(str);
-            if(!Main.LOGLEVEL.equals("OFF")){
+            if(logger.getLevel() != Level.OFF){
                 Main.print("+" + str);
             }
             

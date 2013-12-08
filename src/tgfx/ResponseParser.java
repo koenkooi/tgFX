@@ -1,36 +1,38 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright (c) 2013 Synthetos LLC
+ * Rileyporter@gmail.com
+ * www.synthetos.com
+ * see license for terms
  */
 package tgfx;
 
-import org.json.*;
 import java.util.Iterator;
 import java.util.Observable;
 import java.util.concurrent.BlockingQueue;
-import java.util.logging.Level;
 import javafx.application.Platform;
 import jfxtras.labs.dialogs.MonologFX;
 import jfxtras.labs.dialogs.MonologFXBuilder;
 import jfxtras.labs.dialogs.MonologFXButton;
 import static jfxtras.labs.dialogs.MonologFXButton.Type.YES;
 import jfxtras.labs.dialogs.MonologFXButtonBuilder;
-
-
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import static tgfx.tinyg.MnemonicManager.MNEMONIC_GROUP_AXIS_A;
 import static tgfx.tinyg.MnemonicManager.MNEMONIC_GROUP_AXIS_B;
 import static tgfx.tinyg.MnemonicManager.MNEMONIC_GROUP_AXIS_C;
 import static tgfx.tinyg.MnemonicManager.MNEMONIC_GROUP_AXIS_X;
 import static tgfx.tinyg.MnemonicManager.MNEMONIC_GROUP_AXIS_Y;
 import static tgfx.tinyg.MnemonicManager.MNEMONIC_GROUP_AXIS_Z;
+import static tgfx.tinyg.MnemonicManager.MNEMONIC_GROUP_EMERGENCY_SHUTDOWN;
 import static tgfx.tinyg.MnemonicManager.MNEMONIC_GROUP_MOTOR_1;
 import static tgfx.tinyg.MnemonicManager.MNEMONIC_GROUP_MOTOR_2;
 import static tgfx.tinyg.MnemonicManager.MNEMONIC_GROUP_MOTOR_3;
 import static tgfx.tinyg.MnemonicManager.MNEMONIC_GROUP_MOTOR_4;
-import static tgfx.tinyg.MnemonicManager.MNEMONIC_GROUP_SYSTEM;
 import static tgfx.tinyg.MnemonicManager.MNEMONIC_GROUP_STATUS_REPORT;
-import static tgfx.tinyg.MnemonicManager.MNEMONIC_GROUP_EMERGENCY_SHUTDOWN;
+import static tgfx.tinyg.MnemonicManager.MNEMONIC_GROUP_SYSTEM;
 import tgfx.tinyg.TinygDriver;
 import tgfx.tinyg.responseCommand;
 
@@ -45,15 +47,12 @@ public class ResponseParser extends Observable implements Runnable {
     private String[] message = new String[2];
     private BlockingQueue responseQueue;
     boolean RUN = true;
-    String buf = "";
     public ResponseFooter responseFooter = new ResponseFooter();  //our holder for ResponseFooter Data
     private static Logger logger = Logger.getLogger(ResponseParser.class);
     //These values are for mapping what n'Th element inthe json footer array maps to which values.
     private static final int FOOTER_ELEMENT_PROTOCOL_VERSION = 0;
     private static final int FOOTER_ELEMENT_STATUS_CODE = 1;
     private static final int FOOTER_ELEMENT_RX_RECVD = 2;
-    private static final int FOOTER_ELEMENT_CHECKSUM = 3;
-    private JSONArray footerValues;
     private String line;
 
     public boolean isTEXT_MODE() {
@@ -76,26 +75,14 @@ public class ResponseParser extends Observable implements Runnable {
     public ResponseParser(BlockingQueue bq) {
         //Default constructor
         responseQueue = bq;
-
-        //Setup Logging for ResponseParser
-        if (Main.LOGLEVEL.equals("INFO")) {
-            logger.setLevel(org.apache.log4j.Level.INFO);
-        } else if (Main.LOGLEVEL.equals("ERROR")) {
-            logger.setLevel(org.apache.log4j.Level.ERROR);
-        } else {
-            logger.setLevel(org.apache.log4j.Level.OFF);
-        }
-
     }
 
     @Override
     public void run() {
         logger.info("Response Parser Running");
-        if(!Main.LOGLEVEL.equals("OFF")){
+        if(logger.getLevel() != Level.OFF){
             Main.print("[+]Response Parser Thread Running...");
         }
-        
-
 
         while (RUN) {
             try {
@@ -139,50 +126,11 @@ public class ResponseParser extends Observable implements Runnable {
                     notifyObservers(message);
                 }
             } catch (InterruptedException | JSONException ex) {
-                logger.error("[!]Error in responseParser run(): " + ex.getMessage());
-
+                logger.error("[!]Error in responseParser run(): ", ex);
             }
         }
     }
-
-    private boolean isJsonObject(JSONObject js, String strVal) throws Exception {
-
-        if (js.get(strVal).getClass().toString().contains("JSONObject")) {
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-//    public void applyStatusReport(JSONObject js) throws Exception {
-//
-//        logger.info("Applying JSON Object to System Group");
-//        Iterator ii = js.keySet().iterator();
-//        while (ii.hasNext()) {
-//            String _key = ii.next().toString();
-//            String _val = js.get(_key).toString();
-//            String _parent;
-//            _parent = (TinygDriver.getInstance().mneManager.lookupSingleGroup(_key)).getSettingParent();
-//            final responseCommand rc = new responseCommand(_parent, _key, _val);
-//            TinygDriver.getInstance().m.applyJsonStatusReport(rc);
-//            setChanged();
-//            String[] message = new String[2];
-//            message[0] = "STATUS_REPORT";
-//            message[1] = null;
-//            notifyObservers(message);
-//        }
-//        //Set the status report values 
-////            TinygDriver.getInstance().m.getAxisByName("X").setWork_position(js.getDouble("posx"));
-////            TinygDriver.getInstance().m.getAxisByName("Y").setWork_position(js.getDouble("posy"));
-////            TinygDriver.getInstance().m.getAxisByName("Z").setWork_position(js.getDouble("posz"));
-////            TinygDriver.getInstance().m.getAxisByName("A").setWork_position(js.getDouble("posa"));
-////            TinygDriver.getInstance().m.setMachineState(js.getInt("stat"));
-////            TinygDriver.getInstance().m.setMotionMode(js.getInt("momo"));
-////            TinygDriver.getInstance().m.setVelocity(js.getDouble("vel"));
-//
-//    }
     public void applySettingMasterGroup(JSONObject js, String pg) throws Exception {
-        String parentGroup;
         if (pg.equals(MNEMONIC_GROUP_STATUS_REPORT)) {
             //This is a status report master object that came in through a response object.
             //meaning that the response was asked for like this {"sr":""} and returned like this.
@@ -207,8 +155,7 @@ public class ResponseParser extends Observable implements Runnable {
                         } else {
                             //This is the normal case
                             rc.setSettingValue(js.get(key).toString());
-                            parentGroup = rc.getSettingParent();
-                            _applySettings(rc.buildJsonObject(), rc.getSettingParent()); //we will supply the parent object name for each key pai
+                            applySettings(rc.buildJsonObject(), rc.getSettingParent()); //we will supply the parent object name for each key pai
                         }
                     }
                 }
@@ -233,7 +180,7 @@ public class ResponseParser extends Observable implements Runnable {
 
                 responseCommand rc = new responseCommand(MNEMONIC_GROUP_SYSTEM, key.toString(), js.get(key).toString());
                 TinygDriver.getInstance().getMachine().applyJsonStatusReport(rc);
-//                _applySettings(rc.buildJsonObject(), rc.getSettingParent()); //we will supply the parent object name for each key pair
+//                applySettings(rc.buildJsonObject(), rc.getSettingParent()); //we will supply the parent object name for each key pair
             }
             setChanged();
             message[0] = "STATUS_REPORT";
@@ -292,7 +239,7 @@ public class ResponseParser extends Observable implements Runnable {
                             responseCommand rc = TinygDriver.getInstance().mneManager.lookupSingleGroup(key);
                             rc.setSettingValue(js.get(key).toString());
                             parentGroup = rc.getSettingParent();
-                            _applySettings(rc.buildJsonObject(), rc.getSettingParent()); //we will supply the parent object name for each key pair
+                            applySettings(rc.buildJsonObject(), rc.getSettingParent()); //we will supply the parent object name for each key pair
                             break;
                     }
                 }
@@ -311,19 +258,17 @@ public class ResponseParser extends Observable implements Runnable {
                      * Contains a single object in the json response I am not
                      * sure this else is needed any longer.
                      */
-                    _applySettings(js, js.keys().next().toString());
+                    applySettings(js, js.keys().next().toString());
                 }
             }
         } catch (Exception ex) {
-            logger.error("[!] Error in applySetting(JsonOBject js) : " + ex.getMessage());
+            logger.error("[!] Error in applySetting(JsonOBject js) : ",  ex);
             logger.error("[!]JSON String Was: " + js.toString());
             logger.error("Error in Line: " + js);
-
-
         }
     }
 
-    private void _applySettings(JSONObject js, String pg) throws Exception {
+    private void applySettings(JSONObject js, String pg) throws Exception {
 
         switch (pg) {
             case (MNEMONIC_GROUP_MOTOR_1):
@@ -474,8 +419,7 @@ public class ResponseParser extends Observable implements Runnable {
                                     TinygDriver.getInstance().priorityWrite((byte) 0x18);
 
                                 } catch (Exception ex) {
-                                    java.util.logging.Logger.getLogger(ResponseParser.class
-                                            .getName()).log(Level.SEVERE, null, ex);
+                                    logger.error(ex);
                                 }
                                 break;
                             case CANCEL:
@@ -488,14 +432,9 @@ public class ResponseParser extends Observable implements Runnable {
 
 
             default:
-
                 //This is for single settings xfr, 1tr etc...
                 //This is pretty ugly but it gets the key and the value. For single values.
                 responseCommand rc = TinygDriver.getInstance().mneManager.lookupSingleGroup(pg);
-
-//                  String _parent = String.valueOf(parentGroup.charAt(0));
-                String newJs;
-//                  String _key = parentGroup; //I changed this to deal with the fb mnemonic.. not sure if this works all over.
                 rc.setSettingValue(String.valueOf(js.get(js.keys().next().toString())));
                 logger.info("Single Key Value: " + rc.getSettingParent() + rc.getSettingKey() + rc.getSettingValue());
                 this.applySetting(rc.buildJsonObject()); //We pass the new json object we created from the string above
@@ -517,8 +456,6 @@ public class ResponseParser extends Observable implements Runnable {
 
     private void parseFooter(JSONArray footerValues) {
         try {
-
-
             //Checking to see if we have a footer response
             //Status reports will not have a footer so this is for everything else
 
@@ -549,7 +486,7 @@ public class ResponseParser extends Observable implements Runnable {
     public synchronized void parseJSON(String line) throws JSONException {
 
         logger.info("Got Line: " + line + " from TinyG.");
-        if(!Main.LOGLEVEL.equals("OFF")){
+        if(logger.getLevel() != Level.OFF){
             Main.print("-" + line);
         }
         
@@ -582,10 +519,8 @@ public class ResponseParser extends Observable implements Runnable {
                                     break;
                             }
                         }
-
                     } catch (JSONException ex) {
-                        java.util.logging.Logger.getLogger(ResponseParser.class
-                                .getName()).log(Level.SEVERE, null, ex);
+                        logger.error(ex);
                     }
                 }
             });
@@ -593,6 +528,5 @@ public class ResponseParser extends Observable implements Runnable {
         } else if (js.has("er")) {
             applySetting(js);
         }
-
     }
 }

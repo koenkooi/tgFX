@@ -13,6 +13,7 @@ import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
+import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 import org.json.JSONException;
 import tgfx.Main;
@@ -152,7 +153,7 @@ public class TinygDriver extends Observable {
                     break;
             }
         } catch (Exception ex) {
-            Main.print("[!]Error in queryHardwareSingleMotorSettings() " + ex.getMessage());
+            logger.error("[!]Error in queryHardwareSingleMotorSettings() ", ex);
         }
     }
 
@@ -458,15 +459,6 @@ public class TinygDriver extends Observable {
     }
 
     private TinygDriver() {
-
-        //Setup Logging for TinyG Driver
-        if (Main.LOGLEVEL.equals("INFO")) {
-//            logger.setLevel(org.apache.log4j.Level.INFO);
-        } else if (Main.LOGLEVEL.equals("ERROR")) {
-            logger.setLevel(org.apache.log4j.Level.ERROR);
-        } else {
-            logger.setLevel(org.apache.log4j.Level.OFF);
-        }
     }
 
     /**
@@ -484,7 +476,6 @@ public class TinygDriver extends Observable {
     }
 
     private static class TinygDriverHolder {
-
         private static final TinygDriver INSTANCE = new TinygDriver();
     }
 
@@ -504,6 +495,7 @@ public class TinygDriver extends Observable {
             TinygDriver.queue.put((byte[]) queue);
         } catch (Exception e) {
             Main.print("ERROR n shit");
+            logger.error("error n shit");
         }
     }
 
@@ -557,8 +549,8 @@ public class TinygDriver extends Observable {
 
     public void priorityWrite(Byte b) throws Exception {
         this.ser.priorityWrite(b);
-        if(!Main.LOGLEVEL.equals("OFF")){
-            Main.print("+" + String.valueOf(b));
+        if(logger.getLevel() != Level.OFF){
+            logger.info("+" + String.valueOf(b));
         }
     }
 
@@ -567,8 +559,8 @@ public class TinygDriver extends Observable {
             msg = msg + "\n";
         }
         ser.write(msg);
-        if(!Main.LOGLEVEL.equals("OFF")){
-            Main.print("+" + msg);
+        if(logger.getLevel() != Level.OFF){
+            logger.info("+" + msg);
         }
         
     }
@@ -576,11 +568,8 @@ public class TinygDriver extends Observable {
     /**
      *
      *
-     *
-     *
      * Utility Methods
      *
-     * @return
      */
     public String[] listSerialPorts() {
         // Get a listing current system serial ports
