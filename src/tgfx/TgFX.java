@@ -24,10 +24,7 @@ public class TgFX extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
-
-//        context = new ClassPathXmlApplicationContext("beans.xml");
-        Parent root;
-        root = (Parent) FXMLLoader.load(getClass().getResource("Main.fxml"));
+        Parent root = (Parent) FXMLLoader.load(getClass().getResource("Main.fxml"));
         Scene scene = new Scene(root);
 
         scene.setRoot(root);
@@ -41,7 +38,10 @@ public class TgFX extends Application {
         stage.setScene(scene);
         stage.show();
     }
-
+/**
+ * usual startup from the shell or GUI
+ * @param args standard command line arguments.
+ */
     public static void main(String[] args) {
         PropertyConfigurator.configure("log4j.properties");
         logger.info("tgFX started");
