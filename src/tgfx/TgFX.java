@@ -30,8 +30,11 @@ public class TgFX extends Application {
         scene.setRoot(root);
 
         FXMLLoader fxmlLoader = new FXMLLoader();
-
-        TgFX ignored = (TgFX) fxmlLoader.getController();
+        Object obj = fxmlLoader.getController();
+        if (obj instanceof TgFX) {
+            logger.error("have object of " + obj.getClass().getName());
+            TgFX ignored = (TgFX) obj;
+        }
 
         stage.setMinHeight(800);
         stage.setMinWidth(1280);

@@ -10,6 +10,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Enumeration;
+import org.apache.log4j.Logger;
+import tgfx.tinyg.TinygDriverFactory;
 
 
 /**
@@ -17,11 +19,10 @@ import java.util.Enumeration;
  * @author ril3y
  */
 public class SerialDriver implements SerialPortEventListener {
-    private static org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(SerialWriter.class);
+    private static Logger logger = Logger.getLogger(SerialWriter.class);
     private boolean connectionState = false;
     public String portArray[] = null; 
     public SerialPort serialPort;
-    private String port;
     public InputStream input;
     public OutputStream output;
     private boolean CANCELLED = false;
@@ -31,8 +32,11 @@ public class SerialDriver implements SerialPortEventListener {
     public byte[] debugBuffer = new byte[1024];
     public ArrayList<String> lastRes = new ArrayList();
     public double offsetPointer = 0;
+    private final TinygDriver tinygD;
  
-    
+    private SerialDriver() {
+        tinygD = TinygDriverFactory.getTinygDriver();
+    }
   
 
     public void write(String str) {
@@ -43,8 +47,6 @@ public class SerialDriver implements SerialPortEventListener {
             logger.error("Error in SerialDriver Write");
             logger.error("\t" + ex.getMessage());
         }
-
-
     }
 
     public void priorityWrite(String str) throws Exception {
@@ -54,9 +56,6 @@ public class SerialDriver implements SerialPortEventListener {
     public void priorityWrite(Byte b) throws Exception {
         logger.debug("[*] Priority Write Sent\n");
         this.output.write(b);
-    }
-
-    private SerialDriver() {
     }
 
     public static SerialDriver getInstance() {
@@ -95,11 +94,6 @@ public class SerialDriver implements SerialPortEventListener {
         return this.connectionState;
     }
     
-    
-    
-    
-    
-    
     @Override
     public void serialEvent(SerialPortEvent oEvent) {
         byte[] inbuffer = new byte[1024];
@@ -114,7 +108,7 @@ public class SerialDriver implements SerialPortEventListener {
                     if ( inbuffer[i] == 0xA) { // inbuffer[i] is a \n
                         String f = new String(lineBuffer, 0, lineIdx);
                         if(!f.equals("")){ //Do not add "" to the jsonQueue..
-                            TinygDriver.getInstance().appendJsonQueue(f);
+                            tinygD.appendJsonQueue(f);
                         }
                         lineIdx = 0;
                     } else {
@@ -153,7 +147,6 @@ public class SerialDriver implements SerialPortEventListener {
     public boolean initialize(String port, int DATA_RATE) {
         
         int TIME_OUT = 2000;
-        this.port = port;
 
         if (isConnected()) {
             String returnMsg = "[*] Port Already Connected.\n";

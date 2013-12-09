@@ -48,6 +48,7 @@ import tgfx.system.Machine;
 import tgfx.system.StatusCode;
 import tgfx.tinyg.CommandManager;
 import tgfx.tinyg.TinygDriver;
+import tgfx.tinyg.TinygDriverFactory;
 import tgfx.ui.gcode.GcodeTabController;
 import tgfx.ui.machinesettings.MachineSettingsController;
 import tgfx.ui.tgfxsettings.TgfxSettingsController;
@@ -65,7 +66,9 @@ public class Main extends Stage implements Initializable, Observer {
     private boolean buildChecked = false;  //this is checked apon initial connect.  Once this is set to true
     //if a buildVersion changed message comes in it will not refire onConnect2() again and again
     static final Logger logger = Logger.getLogger(Main.class);
-    private final TinygDriver tinyg = TinygDriver.getInstance();
+    private final TinygDriver tinyg;
+    private final Machine theMachine;
+    
     final static ResourceBundle rb = ResourceBundle.getBundle("version");   //Used to track build date and build number
     @FXML
     private Button Connect;
@@ -101,6 +104,8 @@ public class Main extends Stage implements Initializable, Observer {
  * default constructor
  */    
     public Main() {
+        tinyg = TinygDriverFactory.getTinygDriver();
+        theMachine = tinyg.getMachine();
     }
 
     public static String getOperatingSystem() {
@@ -161,7 +166,7 @@ public class Main extends Stage implements Initializable, Observer {
 //                        Timer timer = new Timer("connectTimout");
 
                         GcodeTabController.setGcodeTextTemp("Attempting to Connect to TinyG.");
-                        TinygDriver.getInstance().getSerialWriter().notifyAck(); //If the serialWriter is in a wait state.. wake it up
+                        tinyg.getSerialWriter().notifyAck(); //If the serialWriter is in a wait state.. wake it up
                         tinyg.write(CommandManager.CMD_APPLY_NOOP); //Just waking things up.
                         tinyg.write(CommandManager.CMD_APPLY_NOOP);
                         tinyg.write(CommandManager.CMD_APPLY_NOOP);
@@ -533,55 +538,12 @@ public class Main extends Stage implements Initializable, Observer {
         srCoord.textProperty().bind(m.getGcm().getCurrentGcodeCoordinateSystemName());
         srGcodeLine.textProperty().bind(m.getLineNumberSimple().asString());
 
+    }
 
-        /*##########################
-         * SOCKET NETWORK INIT CODE
-         ##########################/*
-         //SocketMonitor sm;
-         //Thread remoteListener = new Thread(initRemoteServer("8888"));
-         //remoteListener.setName("Remote Listener Thread");
-         //remoteListener.start();
-
-        
-         /*######################################
-         * WEB PAGE SUPPORT
-         ######################################*/
-//        final WebEngine webEngine = html.getEngine();
-//        final WebEngine webEngine2 = makerCam.getEngine();
-//
-//        Platform.runLater(
-//                new Runnable() {
-//            @Override
-//            public void run() {
-//                webEngine.load("https://github.com/synthetos/TinyG/wiki");
-//                webEngine2.load("http://simplegcoder.com/js_editor/");
-//            }
-//        });
-
-
-        /*############################################
-         * BUILD VERSIONING CODE
-         ############################################*/
-//        buildNumber = Integer.valueOf(getBuildInfo("BUILD").replace(",", ""));
-//        buildDate = getBuildInfo("DATE");
-//
-//        //Set our build / versions in the tgFX settings tab.
-//        tgfxBuildDate.setText(buildDate);
-
-        //This is the input text box change listener.
-        //Made the blinky line at the end of the box so you can edit the value quickly
-//        input.textProperty().addListener(new ChangeListener<String>() {
-//               @Override
-//               public void changed(ObservableValue<? extends String> arg0, String arg1, String arg2) {
-//                    Main.print(input.getCaretPosition());
-//                    Platform.runLater(new Runnable() {
-//                         @Override
-//                         public void run() {
-//                              
-//                         }
-//                    });
-//
-//               }
-//          });
+    /**
+     * @return the theMachine
+     */
+    public Machine getTheMachine() {
+        return theMachine;
     }
 }

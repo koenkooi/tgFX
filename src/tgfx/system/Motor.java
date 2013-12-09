@@ -1,6 +1,7 @@
 /*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
+ * Copyright (c) 2013 Synthetos LLC
+ * Rileyporter@gmail.com
+ * www.synthetos.com
  */
 package tgfx.system;
 
@@ -9,6 +10,7 @@ import org.json.JSONObject;
 import org.apache.log4j.Logger;
 import tgfx.tinyg.MnemonicManager;
 import tgfx.tinyg.TinygDriver;
+import tgfx.tinyg.TinygDriverFactory;
 import tgfx.tinyg.responseCommand;
 
 /**
@@ -16,7 +18,6 @@ import tgfx.tinyg.responseCommand;
  * @author ril3y
  */
 public class Motor {
-
     
     static final Logger logger = Logger.getLogger(TinygDriver.class);
     private String CURRENT_MOTOR_JSON_OBJECT;
@@ -27,7 +28,8 @@ public class Motor {
     private float tr; //travel revolution
     private boolean po; //polarity
     private boolean pm; //power management
-
+    private final TinygDriver tinygD;
+    private final Machine theMachine;
     /**
      *
      * What TinyG Motor Class Looks Like. 2/1/2012 [1ma] m1_map_to_axis 0 [0=X,
@@ -38,6 +40,8 @@ public class Motor {
      */
     public Motor(int id) {
         id_number = id;
+        tinygD = TinygDriverFactory.getTinygDriver();
+        theMachine = tinygD.getMachine();
     }
 
     public String getCURRENT_MOTOR_JSON_OBJECT() {
@@ -163,38 +167,36 @@ public class Motor {
 
                 switch (_key) {
                     case (MnemonicManager.MNEMONIC_MOTOR_MAP_AXIS):
-                        TinygDriver.getInstance().getMachine().getMotorByNumber(Integer.valueOf(rc.getSettingParent())).setMapToAxis(Integer.valueOf(rc.getSettingValue()));
+                        theMachine.getMotorByNumber(Integer.valueOf(rc.getSettingParent())).setMapToAxis(Integer.valueOf(rc.getSettingValue()));
                         logger.info("[APPLIED:" + rc.getSettingParent() + " " + rc.getSettingKey() + ":" + rc.getSettingValue());
                         break;
 
                     case (MnemonicManager.MNEMONIC_MOTOR_MICROSTEPS):
-                        TinygDriver.getInstance().getMachine().getMotorByNumber(Integer.valueOf(rc.getSettingParent())).setMicrosteps(Integer.valueOf(rc.getSettingValue()));
+                        theMachine.getMotorByNumber(Integer.valueOf(rc.getSettingParent())).setMicrosteps(Integer.valueOf(rc.getSettingValue()));
                         logger.info("[APPLIED:" + rc.getSettingParent() + " " + rc.getSettingKey() + ":" + rc.getSettingValue());
                         break;
 
                     case (MnemonicManager.MNEMONIC_MOTOR_POLARITY):
-                        TinygDriver.getInstance().getMachine().getMotorByNumber(Integer.valueOf(rc.getSettingParent())).setPolarity(Integer.valueOf(rc.getSettingValue()));
+                        theMachine.getMotorByNumber(Integer.valueOf(rc.getSettingParent())).setPolarity(Integer.valueOf(rc.getSettingValue()));
                         logger.info("[APPLIED:" + rc.getSettingParent() + " " + rc.getSettingKey() + ":" + rc.getSettingValue());
                         break;
 
                     case (MnemonicManager.MNEMONIC_MOTOR_POWER_MANAGEMENT):
-                        TinygDriver.getInstance().getMachine().getMotorByNumber(Integer.valueOf(rc.getSettingParent())).setPower_management(Integer.valueOf(rc.getSettingValue()));
+                        theMachine.getMotorByNumber(Integer.valueOf(rc.getSettingParent())).setPower_management(Integer.valueOf(rc.getSettingValue()));
                         logger.info("[APPLIED:" + rc.getSettingParent() + " " + rc.getSettingKey() + ":" + rc.getSettingValue());
                         break;
 
                     case (MnemonicManager.MNEMONIC_MOTOR_STEP_ANGLE):
-                        TinygDriver.getInstance().getMachine().getMotorByNumber(Integer.valueOf(rc.getSettingParent())).setStep_angle(Float.valueOf(rc.getSettingValue()));
+                        theMachine.getMotorByNumber(Integer.valueOf(rc.getSettingParent())).setStep_angle(Float.valueOf(rc.getSettingValue()));
                         logger.info("[APPLIED:" + rc.getSettingParent() + " " + rc.getSettingKey() + ":" + rc.getSettingValue());
                         break;
 
                     case (MnemonicManager.MNEMONIC_MOTOR_TRAVEL_PER_REVOLUTION):
-                        TinygDriver.getInstance().getMachine().getMotorByNumber(Integer.valueOf(rc.getSettingParent())).setTravel_per_revolution(Float.valueOf(rc.getSettingValue()));
+                        theMachine.getMotorByNumber(Integer.valueOf(rc.getSettingParent())).setTravel_per_revolution(Float.valueOf(rc.getSettingValue()));
                         logger.info("[APPLIED:" + rc.getSettingParent() + " " + rc.getSettingKey() + ":" + rc.getSettingValue());
                         break;
                     default:
                         logger.info("Default Switch");
-
-
                 }
             }
 

@@ -30,7 +30,7 @@
     </stylesheets>
 </AnchorPane>-->
 
-<Tab fx:id="gcode_tab" closable="false" text="Gcode" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" fx:controller="tgfx.ui.gcode.GcodeTabController">
+<Tab fx:id="gcode_tab" fx:controller="tgfx.ui.gcode.GcodeTabController" closable="false" text="Gcode" xmlns:fx="http://javafx.com/fxml/1" xmlns="http://javafx.com/javafx/2.2" >
   <content>
     <HBox id="gcodeTabHbox" fx:id="gcodeTabControllerHBox" alignment="TOP_CENTER" fillHeight="true" minHeight="450.0" prefHeight="-1.0" prefWidth="-1.0" style="-fx-background-color: rgba(0,0,0,0.08), linear-gradient(#9a9a9a, #909090), linear-gradient(white 0%, #f3f3f3 50%, #ececec 51%, #f2f2f2 100%);&#10;-fx-background-insets: 0 0 -1 0,0,1;&#10;-fx-background-radius: 5,5,4;&#10;-fx-padding: 3 30 3 30;&#10;-fx-text-fill: #242d35;&#10;-fx-font-size: 14px;" visible="true">
       <children>

@@ -31,7 +31,7 @@ import static jfxtras.labs.dialogs.MonologFXButton.Type.CANCEL;
 import static jfxtras.labs.dialogs.MonologFXButton.Type.YES;
 import jfxtras.labs.dialogs.MonologFXButtonBuilder;
 import tgfx.Main;
-import tgfx.ResponseParser;
+import tgfx.system.Machine;
 import tgfx.tinyg.*;
 
 /**
@@ -46,14 +46,17 @@ public class FirmwareUpdaterController implements Initializable {
     @FXML
     private Button handleUpdateFirmware;
     private SimpleDoubleProperty _currentVersionString = new SimpleDoubleProperty();
-//    private String tinygHexFileUrl = TinygDriver.getInstance().hardwarePlatform.getFirmwareUrl();
     //    private String tinygHexFileUrl = "https://raw.github.com/synthetos/TinyG/master/firmware/tinyg/default/tinyg.hex";
     private String avrdudePath = new String();
     private String avrconfigPath = new String();
     static HashMap<String, String> platformSetup = new HashMap<>();
-//    private String currentFirmwareFile = "https://raw.github.com/synthetos/TinyG/master/version.current";
-//    private String currentFirmwareFile = TinygDriver.getInstance().hardwarePlatform.getLatestVersionUrl();
-
+    private final TinygDriver tinygD;
+    private final Machine theMachine;
+    
+    private FirmwareUpdaterController() {
+        tinygD = TinygDriverFactory.getTinygDriver();
+        theMachine = tinygD.getMachine();
+    }
     /**
      * Initializes the controller class.
      */
@@ -83,7 +86,7 @@ public class FirmwareUpdaterController implements Initializable {
                 //Download TinyG.hex
                 URL url;
                 try {
-                    url = new URL(TinygDriver.getInstance().getHardwarePlatform().getFirmwareUrl());
+                    url = new URL(tinygD.getHardwarePlatform().getFirmwareUrl());
                     URLConnection urlConnection = url.openConnection();
                     Main.print("Opened Connection to Github");
                     Main.postConsoleMessage("Downloading tinyg.hex file from github.com");
@@ -112,7 +115,7 @@ public class FirmwareUpdaterController implements Initializable {
 
                 try {
                     Main.print("Updating TinyG Now... Please Wait");
-                    Process process = rt.exec(avrdudePath + " -p x192a3 -C " + avrconfigPath + " -c avr109 -b 115200 -P " + TinygDriver.getInstance().getPortName() + " -U flash:w:tinyg.hex");
+                    Process process = rt.exec(avrdudePath + " -p x192a3 -C " + avrconfigPath + " -c avr109 -b 115200 -P " + tinygD.getPortName() + " -U flash:w:tinyg.hex");
                     InputStream is = process.getInputStream();
                     Main.postConsoleMessage("Attempting to update TinyG's firmware.");
                     process.waitFor();
@@ -121,8 +124,8 @@ public class FirmwareUpdaterController implements Initializable {
                     Logger.getLogger(FirmwareUpdaterController.class.getName()).log(Level.SEVERE, null, ex);
                 }
                 try {
-                    TinygDriver.getInstance().priorityWrite(CommandManager.CMD_APPLY_RESET);
-                    TinygDriver.getInstance().disconnect();
+                    tinygD.priorityWrite(CommandManager.CMD_APPLY_RESET);
+                    tinygD.disconnect();
                     
                 } catch (Exception ex) {
                     Logger.getLogger(FirmwareUpdaterController.class.getName()).log(Level.SEVERE, null, ex);
@@ -138,7 +141,7 @@ public class FirmwareUpdaterController implements Initializable {
             @Override
             public void run() {
                 try {
-                    URL url = new URL(TinygDriver.getInstance().getHardwarePlatform().getLatestVersionUrl());
+                    URL url = new URL(tinygD.getHardwarePlatform().getLatestVersionUrl());
                     URLConnection urlConnection = url.openConnection();
 
                     //                    
@@ -150,7 +153,7 @@ public class FirmwareUpdaterController implements Initializable {
                     input.read(buffer);
                     String _currentVersionString = new String(buffer);
                     Double currentVal;
-                    if (TinygDriver.getInstance().getMachine().getFirmwareBuildValue() < Double.valueOf(_currentVersionString)) {
+                    if (theMachine.getFirmwareBuildValue() < Double.valueOf(_currentVersionString)) {
                         //We need to update your firmware
                         Platform.runLater(new Runnable() {
                             @Override
@@ -201,7 +204,7 @@ public class FirmwareUpdaterController implements Initializable {
                         });
 
                     } else {
-                        Main.postConsoleMessage("Your " + TinygDriver.getInstance().getHardwarePlatform().getPlatformName() + "'s firmware is up to date...\n");
+                        Main.postConsoleMessage("Your " + tinygD.getHardwarePlatform().getPlatformName() + "'s firmware is up to date...\n");
                     }
 
 //                    currentVal.valueOf(avrdudePath)
@@ -244,23 +247,23 @@ public class FirmwareUpdaterController implements Initializable {
     //https://github.com/synthetos/TinyG/blob/master/readme.md
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        NumberExpression ne = new SimpleDoubleProperty(_currentVersionString.doubleValue()).subtract(TinygDriver.getInstance().getMachine().getFirmwareBuild());
+        NumberExpression ne = new SimpleDoubleProperty(_currentVersionString.doubleValue()).subtract(theMachine.getFirmwareBuild());
 
-//        BooleanExpression be = new SimpleDoubleProperty(TinygDriver.getInstance().m.getFirmwareVersion());
-//        _currentVersionString.TinygDriver.getInstance().m.firmwareBuild);
+//        BooleanExpression be = new SimpleDoubleProperty(tinygD.m.getFirmwareVersion());
+//        _currentVersionString.tinygD.m.firmwareBuild);
     }
 
     protected void enterBootloaderMode() {
-        if (TinygDriver.getInstance().isConnected().get()) {
+        if (tinygD.isConnected().get()) {
             //We need to disconnect from tinyg after issuing out boot command.
             try {
-                TinygDriver.getInstance().priorityWrite(CommandManager.CMD_APPLY_BOOTLOADER_MODE); //Set our board into bootloader mode.
+                tinygD.priorityWrite(CommandManager.CMD_APPLY_BOOTLOADER_MODE); //Set our board into bootloader mode.
                 Thread.sleep(1000);
 
             } catch (Exception ex) {
                 Logger.getLogger(FirmwareUpdaterController.class.getName()).log(Level.SEVERE, null, ex);
             }
-            TinygDriver.getInstance().disconnect();
+            tinygD.disconnect();
             try {
                 Thread.sleep(500);
             } catch (InterruptedException ex) {

@@ -28,6 +28,7 @@ import tgfx.Main;
 import tgfx.system.Machine;
 import tgfx.tinyg.CommandManager;
 import tgfx.tinyg.TinygDriver;
+import tgfx.tinyg.TinygDriverFactory;
 import tgfx.ui.gcode.GcodeTabController;
 
 /**
@@ -43,10 +44,12 @@ public class CncMachinePreview extends Pane {
     private static double yPrevious;
     private boolean _msgSent = false;
     private static org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(CncMachinePreview.class);
-    private Machine machine;
+    private final Machine machine;
+    private final TinygDriver tinygD;
 
     public CncMachinePreview() {
-        machine = TinygDriver.getInstance().getMachine();
+        tinygD = TinygDriverFactory.getTinygDriver();
+        machine = tinygD.getMachine();
         Preconditions.checkNotNull(machine);
         //Cursor point indicator
         cursorPoint.setRadius(1);
@@ -126,11 +129,11 @@ public class CncMachinePreview extends Pane {
                         @Override
                         public void handle(ActionEvent t) {
                             Draw2d.setFirstDraw(true); //We do not want to draw a line from our previous position
-                            TinygDriver.getInstance().getCmdManager().setMachinePosition(getNormalizedX(me.getX()), getNormalizedY(me.getY()));
+                            tinygD.getCmdManager().setMachinePosition(getNormalizedX(me.getX()), getNormalizedY(me.getY()));
                             Draw2d.setFirstDraw(true); //This allows us to move our drawing to a new place without drawing a line from the old.
                             try {
-                                TinygDriver.getInstance().write(CommandManager.CMD_APPLY_SYSTEM_ZERO_ALL_AXES);
-                                TinygDriver.getInstance().write(CommandManager.CMD_QUERY_STATUS_REPORT);
+                                tinygD.write(CommandManager.CMD_APPLY_SYSTEM_ZERO_ALL_AXES);
+                                tinygD.write(CommandManager.CMD_QUERY_STATUS_REPORT);
                             } catch (Exception ex) {
                                 logger.error(ex);
                             }
@@ -218,42 +221,6 @@ public class CncMachinePreview extends Pane {
         Line l;
         l = new Line();
         l.setSmooth(true);
-        //Code to make mm's look the same size as inches
-        double scale = 1;
-        double unitMagnication = 1;
-
-//        if (TinygDriver.getInstance().m.getGcodeUnitMode().get().equals(Gcode_unit_modes.inches.toString())) {
-//            unitMagnication = 5;  //INCHES
-//        } else {
-//            unitMagnication = 2; //MM
-//        }
-//        double newX = unitMagnication * (Double.valueOf(TinygDriver.getInstance().m.getAxisByName("X").getWork_position().get()) + 80);// + magnification;
-//        double newY = unitMagnication * (Double.valueOf(TinygDriver.getInstance().m.getAxisByName("Y").getWork_position().get()) + 80);// + magnification;
-
-
-//        if (newX > gcodePane.getWidth() || newX > gcodePane.getWidth()) {
-//            scale = scale / 2;
-//            Line line = new Line();
-//            Iterator ii = gcodePane.getChildren().iterator();
-//            gcodePane.getChildren().clear(); //remove them after we have the iterator
-//            while (ii.hasNext()) {
-//                if (ii.next().getClass().toString().contains("Line")) {
-//                    //This is a line.
-//                    line = (Line) ii.next();
-//                    line.setStartX(line.getStartX() / 2);
-//                    line.setStartY(line.getStartY() / 2);
-//                    line.setEndX(line.getEndX() / 2);
-//                    line.setEndY(line.getEndY() / 2);
-//                    gcodePane.getChildren().add(line);
-//
-//                }
-
-//            }
-//            console.appendText("[+]Finished Drawing Prevew Scale Change.\n");
-//            gcodeWindow.setScaleX(scale);
-//            gcodeWindow.setScaleY(scale);
-//        }
-//        Main.print(gcodePane.getHeight() - TinygDriver.getInstance().m.getAxisByName("y").getWork_position().get());
         double newX = machine.getX().getMachinePositionSimple().get();
         double newY = this.getHeight() - machine.getY().getMachinePositionSimple().get();
        
@@ -315,13 +282,13 @@ public class CncMachinePreview extends Pane {
     }
 
     public void zeroSystem() {
-        if (TinygDriver.getInstance().isConnected().get()) {
+        if (tinygD.isConnected().get()) {
             try {
                 Draw2d.setFirstDraw(true); //This allows us to move our drawing to a new place without drawing a line from the old.
-                TinygDriver.getInstance().write(CommandManager.CMD_APPLY_SYSTEM_ZERO_ALL_AXES);
+                tinygD.write(CommandManager.CMD_APPLY_SYSTEM_ZERO_ALL_AXES);
                 //G92 does not invoke a status report... So we need to generate one to have
                 //Our GUI update the coordinates to zero
-                TinygDriver.getInstance().write(CommandManager.CMD_QUERY_STATUS_REPORT);
+                tinygD.write(CommandManager.CMD_QUERY_STATUS_REPORT);
                 //We need to set these to 0 so we do not draw a line from the last place we were to 0,0
                 resetDrawingCoords();
             } catch (Exception ex) {

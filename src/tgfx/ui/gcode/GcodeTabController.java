@@ -4,6 +4,7 @@
  */
 package tgfx.ui.gcode;
 
+import com.google.common.base.Preconditions;
 import java.net.URL;
 import java.util.Date;
 import java.util.ResourceBundle;
@@ -19,10 +20,8 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Button;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
-import javafx.scene.control.TextArea;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
@@ -64,7 +63,9 @@ public class GcodeTabController implements Initializable {
     private double NUDGE_FEED_RATE = .05;  //%5
     private static int totalGcodeLines = 0;
     private static Date timeStartDt;
-    private Machine theMachine;
+    private final Machine theMachine;
+    private static Machine staticMachine;
+    private final TinygDriver tinygDriver;
     /*  ######################## FXML ELEMENTS ############################*/
     @FXML
     private static Text timeElapsedTxt;
@@ -83,10 +84,6 @@ public class GcodeTabController implements Initializable {
     @FXML
     private static Text gcodeStatusMessage;  //Cursor location on the machinePreview Canvas
     @FXML
-    private static TextArea console;
-    @FXML
-    private Button Run, Connect, gcodeZero, btnClearScreen, pauseResume, btnTest, btnHandleInhibitAllAxis;
-    @FXML
     private GridPane coordLocationGridPane;
     String cmd;
     @FXML
@@ -95,10 +92,13 @@ public class GcodeTabController implements Initializable {
     /**
      * Initializes the controller class.
      */
-    public GcodeTabController() {
+    public GcodeTabController(TinygDriver driver) {
+        Preconditions.checkNotNull(driver);
         logger.setLevel(org.apache.log4j.Level.ERROR);
         logger.info("Gcode Controller Loaded");
-        theMachine = TinygDriver.getInstance().getMachine();
+        tinygDriver = driver;
+        theMachine = tinygDriver.getMachine();
+        staticMachine = theMachine;
         machinePreview.setOnMouseMoved(new EventHandler<MouseEvent>() {
             @Override
             public void handle(MouseEvent me) {
@@ -166,8 +166,8 @@ public class GcodeTabController implements Initializable {
                             if (axis.equals("X") || axis.equals("Y") || axis.equals("Z")) {
                                 // valid key pressed
                                 CommandManager.setIncrementalMovementMode();
-                                TinygDriver.getInstance().write("{\"GC\":\"G1F" + (theMachine.getAxisByName(axis).getFeed_rate_maximum() * FEED_RATE_PERCENTAGE) + axis + jogDial + "\"}\n");
-//                                TinygDriver.getInstance().write("{\"GC\":\"G0" + axis + jogDial + "\"}\n");
+                                tinygDriver.write("{\"GC\":\"G1F" + (theMachine.getAxisByName(axis).getFeed_rate_maximum() * FEED_RATE_PERCENTAGE) + axis + jogDial + "\"}\n");
+//                                tinygDriver.write("{\"GC\":\"G0" + axis + jogDial + "\"}\n");
                                 isKeyPressed = true;
                             }
 
@@ -230,8 +230,7 @@ public class GcodeTabController implements Initializable {
 
     public static void drawCanvasUpdate() {
         if (TgfxSettingsController.isDrawPreview()) {
-            Machine m = TinygDriver.getInstance().getMachine();
-            machinePreview.drawLine(m.getMotionMode().get(), m.getVelocityValue());
+            machinePreview.drawLine(staticMachine.getMotionMode().get(), staticMachine.getVelocityValue());
         }
     }
 
@@ -284,7 +283,7 @@ public class GcodeTabController implements Initializable {
         /*######################################
          * BINDINGS CODE
          ######################################*/
-        gcodeTabControllerHBox.disableProperty().bind(TinygDriver.getInstance().getConnectionStatus().not());
+        gcodeTabControllerHBox.disableProperty().bind(tinygDriver.getConnectionStatus().not());
 
 
         /*######################################
@@ -311,7 +310,7 @@ public class GcodeTabController implements Initializable {
             public void changed(ObservableValue ov, Object oldValue, Object newValue) {
                 String tmp = theMachine.getGcodeUnitMode().get();
 
-//                gcodeUnitMode.getSelectionModel().select(TinygDriver.getInstance().m.getGcodeUnitModeAsInt());
+//                gcodeUnitMode.getSelectionModel().select(tinygDriver.m.getGcodeUnitModeAsInt());
                 if (theMachine.getGcodeUnitModeAsInt() == 0) {
                     //A bug in the jfxtras does not allow for units to be updated.. we hide them if they are not mm
                     xLcd.lcdUnitVisibleProperty().setValue(false);
@@ -329,20 +328,20 @@ public class GcodeTabController implements Initializable {
                 tgfx.Main.postConsoleMessage("[+]Gcode Unit Mode Changed to: " + tmp + "\n");
 
                 try {
-                    TinygDriver.getInstance().getSerialWriter().setThrottled(true);
-                    TinygDriver.getInstance().priorityWrite(CommandManager.CMD_QUERY_MOTOR_1_SETTINGS);
-                    TinygDriver.getInstance().priorityWrite(CommandManager.CMD_QUERY_MOTOR_2_SETTINGS);
-                    TinygDriver.getInstance().priorityWrite(CommandManager.CMD_QUERY_MOTOR_3_SETTINGS);
-                    TinygDriver.getInstance().priorityWrite(CommandManager.CMD_QUERY_MOTOR_4_SETTINGS);
+                    tinygDriver.getSerialWriter().setThrottled(true);
+                    tinygDriver.priorityWrite(CommandManager.CMD_QUERY_MOTOR_1_SETTINGS);
+                    tinygDriver.priorityWrite(CommandManager.CMD_QUERY_MOTOR_2_SETTINGS);
+                    tinygDriver.priorityWrite(CommandManager.CMD_QUERY_MOTOR_3_SETTINGS);
+                    tinygDriver.priorityWrite(CommandManager.CMD_QUERY_MOTOR_4_SETTINGS);
 
-                    TinygDriver.getInstance().priorityWrite(CommandManager.CMD_QUERY_AXIS_X);
-                    TinygDriver.getInstance().priorityWrite(CommandManager.CMD_QUERY_AXIS_Y);
-                    TinygDriver.getInstance().priorityWrite(CommandManager.CMD_QUERY_AXIS_Z);
-                    TinygDriver.getInstance().priorityWrite(CommandManager.CMD_QUERY_AXIS_A);
-                    TinygDriver.getInstance().priorityWrite(CommandManager.CMD_QUERY_AXIS_B);
-                    TinygDriver.getInstance().priorityWrite(CommandManager.CMD_QUERY_AXIS_C);
+                    tinygDriver.priorityWrite(CommandManager.CMD_QUERY_AXIS_X);
+                    tinygDriver.priorityWrite(CommandManager.CMD_QUERY_AXIS_Y);
+                    tinygDriver.priorityWrite(CommandManager.CMD_QUERY_AXIS_Z);
+                    tinygDriver.priorityWrite(CommandManager.CMD_QUERY_AXIS_A);
+                    tinygDriver.priorityWrite(CommandManager.CMD_QUERY_AXIS_B);
+                    tinygDriver.priorityWrite(CommandManager.CMD_QUERY_AXIS_C);
                     Thread.sleep(400);
-                    TinygDriver.getInstance().getSerialWriter().setThrottled(false);
+                    tinygDriver.getSerialWriter().setThrottled(false);
                 } catch (Exception ex) {
                     logger.error("Error querying tg model state on gcode unit change.  GCodeTabController.java binding section.");
                 }
@@ -393,10 +392,10 @@ public class GcodeTabController implements Initializable {
                 if (me.getButton().equals(me.getButton().PRIMARY)) {
                     if (me.getClickCount() == 2) {
                         GcodeLine gcl = (GcodeLine) gcodeView.getSelectionModel().getSelectedItem();
-                        if (TinygDriver.getInstance().isConnected().get()) {
+                        if (tinygDriver.isConnected().get()) {
                             logger.info("Double Clicked gcodeView " + gcl.getCodeLine());
                             try {
-                                TinygDriver.getInstance().write(gcl.getGcodeLineJsonified());
+                                tinygDriver.write(gcl.getGcodeLineJsonified());
                                 tgfx.Main.postConsoleMessage(gcl.getGcodeLineJsonified());
                             } catch (Exception ex) {
                                 logger.error(ex);
@@ -451,16 +450,16 @@ public class GcodeTabController implements Initializable {
                         }
 
                         if (_gcl.getCodeLine().toLowerCase().contains("(")) {
-                            TinygDriver.getInstance().write("Comment:" + _gcl.getCodeLine());
+                            tinygDriver.write("Comment:" + _gcl.getCodeLine());
 //                            tgfx.Main.postConsoleMessage("GCODE COMMENT:" + _gcl.getCodeLine());
                             continue;
                         }
                         line.setLength(0);
                         line.append("{\"gc\":\"").append(_gcl.getCodeLine()).append("\"}\n");
-                        TinygDriver.getInstance().write(line.toString());
+                        tinygDriver.write(line.toString());
                     }
                 }
-                TinygDriver.getInstance().write("**FILEDONE**");
+                tinygDriver.write("**FILEDONE**");
                 return true;
             }
         };
@@ -496,13 +495,13 @@ public class GcodeTabController implements Initializable {
             } else { //MM
                 scaleAmount = ((gcodePane.heightProperty().get() / theMachine.getY().getTravelMaxSimple().get())) * .80;  //%80 of the scale;
             }
-            //  scaleAmount = ((gcodePane.heightProperty().get() / TinygDriver.getInstance().m.getY().getTravelMaxSimple().get())) * .80;  //%80 of the scale;
+            //  scaleAmount = ((gcodePane.heightProperty().get() / tinygDriver.m.getY().getTravelMaxSimple().get())) * .80;  //%80 of the scale;
         }
         machinePreview.autoScaleWorkTravelSpace(scaleAmount);
         //        widthSize.textProperty().bind( Bindings.format("%s",  
-                     //machinePreview.widthProperty().divide(TinygDriver.getInstance().m.gcodeUnitDivision).asString().concat(TinygDriver.getInstance().m.getGcodeUnitMode())    ));
+                     //machinePreview.widthProperty().divide(tinygDriver.m.gcodeUnitDivision).asString().concat(tinygDriver.m.getGcodeUnitMode())    ));
         //        heightSize.setText(decimalFormat.format(
-            //             TinygDriver.getInstance().m.getY().getTravel_maximum()) + " " + TinygDriver.getInstance().m.getGcodeUnitMode().getValue());
+            //             tinygDriver.m.getY().getTravel_maximum()) + " " + tinygDriver.m.getGcodeUnitMode().getValue());
     }
 
     public void handleMaxWithChange() {
@@ -523,7 +522,7 @@ public class GcodeTabController implements Initializable {
             }
         }
         machinePreview.autoScaleWorkTravelSpace(scaleAmount);
-//        widthSize.setText(decimalFormat.format(TinygDriver.getInstance().m.getX().getTravel_maximum()) + " " + TinygDriver.getInstance().m.getGcodeUnitMode().getValue());
+//        widthSize.setText(decimalFormat.format(tinygDriver.m.getX().getTravel_maximum()) + " " + tinygDriver.m.getGcodeUnitMode().getValue());
 
     }
 

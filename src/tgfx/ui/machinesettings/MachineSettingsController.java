@@ -22,8 +22,10 @@ import javafx.scene.control.ListView;
 import javafx.stage.FileChooser;
 import org.apache.log4j.Logger;
 import tgfx.Main;
+import tgfx.system.Machine;
 import tgfx.tinyg.CommandManager;
 import tgfx.tinyg.TinygDriver;
+import tgfx.tinyg.TinygDriverFactory;
 
 /**
  * FXML Controller class
@@ -41,15 +43,22 @@ public class MachineSettingsController implements Initializable {
     private ListView configsListView;
     @FXML
     private static ChoiceBox machineSwitchType, machineUnitMode;
-   
+    private final TinygDriver tinygD;
+    private final Machine theMachine;
+    private static Machine staticMachine;
 
+    private MachineSettingsController() {
+        tinygD = TinygDriverFactory.getTinygDriver();
+        theMachine = tinygD.getMachine();
+        staticMachine = theMachine;
+    }
     public static double getCurrentBuildNumber(){
         return(Double.valueOf(firmwareVersion.getText()));
     }
     
     public static void updateGuiMachineSettings() {
-        machineUnitMode.getSelectionModel().select(TinygDriver.getInstance().getMachine().getGcodeUnitModeAsInt());
-        machineSwitchType.getSelectionModel().select(TinygDriver.getInstance().getMachine().getSwitchType());
+        machineUnitMode.getSelectionModel().select(staticMachine.getGcodeUnitModeAsInt());
+        machineSwitchType.getSelectionModel().select(staticMachine.getSwitchType());
     }
 
     
@@ -60,10 +69,10 @@ public class MachineSettingsController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle rb) {
         populateConfigFiles();          //Populate all Config Files
-        hardwareId.textProperty().bind(TinygDriver.getInstance().getMachine().getHardwareId()); //Bind the tinyg hardware id to the tg driver value
-        hwVersion.textProperty().bind(TinygDriver.getInstance().getMachine().getHardwareVersion()); //Bind the tinyg version  to the tg driver value
-        firmwareVersion.textProperty().bind(TinygDriver.getInstance().getMachine().getFirmwareVersion());
-        buildNumb.textProperty().bind(TinygDriver.getInstance().getMachine().getFirmwareBuild().asString());
+        hardwareId.textProperty().bind(theMachine.getHardwareId()); //Bind the tinyg hardware id to the tg driver value
+        hwVersion.textProperty().bind(theMachine.getHardwareVersion()); //Bind the tinyg version  to the tg driver value
+        firmwareVersion.textProperty().bind(theMachine.getFirmwareVersion());
+        buildNumb.textProperty().bind(theMachine.getFirmwareBuild().asString());
         
     }
 
@@ -110,12 +119,12 @@ public class MachineSettingsController implements Initializable {
         br = new BufferedReader(new InputStreamReader(fis, Charset.forName("UTF-8")));
 
         while ((line = br.readLine()) != null) {
-            if (TinygDriver.getInstance().isConnected().get()) {
+            if (tinygD.isConnected().get()) {
                 if (line.startsWith("NAME:")) {
                     //This is the name of the CONFIG lets not write this to TinyG 
                     tgfx.Main.postConsoleMessage("[+]Loading " + line.split(":")[1] + " config into TinyG... Please Wait...");
                 } else {
-                    TinygDriver.getInstance().write(line + "\n");    //Write the line to tinyG
+                    tinygD.write(line + "\n");    //Write the line to tinyG
                     Thread.sleep(100);      //Writing Values to eeprom can take a bit of time..
                     tgfx.Main.postConsoleMessage("[+]Writing Config String: " + line + "\n");
                 }
@@ -126,8 +135,8 @@ public class MachineSettingsController implements Initializable {
     @FXML
     private void handleApplyMachineSettings() {
         try {
-            TinygDriver.getInstance().getCmdManager().applyMachineSwitchMode(machineSwitchType.getSelectionModel().getSelectedIndex());
-            TinygDriver.getInstance().getCmdManager().applyMachineUnitMode(machineUnitMode.getSelectionModel().getSelectedIndex());
+            tinygD.getCmdManager().applyMachineSwitchMode(machineSwitchType.getSelectionModel().getSelectedIndex());
+            tinygD.getCmdManager().applyMachineUnitMode(machineUnitMode.getSelectionModel().getSelectedIndex());
         } catch (Exception ex) {
             java.util.logging.Logger.getLogger(Main.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
@@ -136,8 +145,8 @@ public class MachineSettingsController implements Initializable {
     @FXML
     private void handleQueryMachineSettings() {
         try {
-            TinygDriver.getInstance().getCmdManager().queryMachineSwitchMode();
-            TinygDriver.getInstance().getCmdManager().queryAllMachineSettings();
+            tinygD.getCmdManager().queryMachineSwitchMode();
+            tinygD.getCmdManager().queryAllMachineSettings();
         } catch (Exception ex) {
             java.util.logging.Logger.getLogger(Main.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
@@ -147,18 +156,18 @@ public class MachineSettingsController implements Initializable {
     void handleApplyDefaultSettings(ActionEvent evt) {
         try {
             if (checkConectedMessage().equals("true")) {
-                TinygDriver.getInstance().write(CommandManager.CMD_APPLY_DEFAULT_SETTINGS);
+                tinygD.write(CommandManager.CMD_APPLY_DEFAULT_SETTINGS);
             } else {
                 logger.error(checkConectedMessage());
                 tgfx.Main.postConsoleMessage(checkConectedMessage());
             }
         } catch (Exception ex) {
-            logger.error("[!]Error Applying Default Settings");
+            logger.error("[!]Error Applying Default Settings", ex);
         }
     }
 
     private String checkConectedMessage() {
-        if (TinygDriver.getInstance().isConnected().get()) {
+        if (tinygD.isConnected().get()) {
             return ("true");
         } else {
             return ("[!]TinyG is Not Connected");
