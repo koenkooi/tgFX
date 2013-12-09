@@ -20,6 +20,8 @@ import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.PropertyValueFactory;
@@ -28,12 +30,14 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.text.Text;
 import javafx.util.Duration;
 import jfxtras.labs.scene.control.gauge.Lcd;
 import org.apache.log4j.Logger;
 import tgfx.render.CncMachinePreview;
+import tgfx.render.Draw2d;
 import tgfx.system.Machine;
 import tgfx.tinyg.CommandManager;
 import tgfx.tinyg.TinygDriver;
@@ -74,6 +78,8 @@ public class GcodeTabController implements Initializable {
     @FXML
     private Lcd xLcd, yLcd, zLcd, aLcd, velLcd; //DRO Lcds
     @FXML
+    private Pane previewPane;
+    @FXML
     StackPane machineWorkspace;
     @FXML
     private TableColumn<GcodeLine, String> gcodeCol;
@@ -86,6 +92,12 @@ public class GcodeTabController implements Initializable {
     @FXML
     private GridPane coordLocationGridPane;
     String cmd;
+    @FXML // ResourceBundle that was given to the FXMLLoader
+    private ResourceBundle resources;
+    @FXML // URL location of the FXML file that was given to the FXMLLoader
+    private URL location;
+    @FXML // fx:id="zMoveScale"
+    private ChoiceBox<?> zMoveScale; 
     @FXML
     private HBox gcodeTabControllerHBox;
 
@@ -227,10 +239,101 @@ public class GcodeTabController implements Initializable {
 //                fadeTransition.setToValue(1.0);
 //                fadeTransition.play();
     }
+    public static void hideGcodeText() {
+//        gcodeStatusMessage.setVisible(false);
+//        FadeTransition fadeTransition  = new FadeTransition(Duration.millis(500), gcodeStatusMessage);
+//                fadeTransition.setFromValue(1.0);
+//                fadeTransition.setToValue(0.0);
+//                fadeTransition.play();
+    }
 
     public static void drawCanvasUpdate() {
         if (TgfxSettingsController.isDrawPreview()) {
             machinePreview.drawLine(staticMachine.getMotionMode().get(), staticMachine.getVelocityValue());
+        }
+    }
+    private void drawTable() {
+        //TODO  We need to make this a message to subscribe to.
+        if (!gcodePane.getChildren().contains(machinePreview)) {
+            gcodePane.getChildren().add(machinePreview); // Add the cnc machine to the gcode pane
+        }
+    }
+
+    @FXML
+    private void handleHomeXYZ(ActionEvent evt) {
+        if (tinygDriver.isConnected().get()) {
+            try {
+                tinygDriver.write(CommandManager.CMD_APPLY_SYSTEM_HOME_XYZ_AXES);
+            } catch (Exception ex) {
+                logger.error("Erroring HomingXYZ Command");
+            }
+        }
+    }
+
+    @FXML
+    private void handleHomeAxisClick(ActionEvent evt) {
+        MenuItem m = (MenuItem) evt.getSource();
+        String _axis = String.valueOf(m.getId().charAt(0));
+        if (tinygDriver.isConnected().get()) {
+            try {
+                switch (_axis) {
+                    case "x":
+                        tinygDriver.write(CommandManager.CMD_APPLY_HOME_X_AXIS);
+                        break;
+                    case "y":
+                        tinygDriver.write(CommandManager.CMD_APPLY_HOME_Y_AXIS);
+                        break;
+                    case "z":
+                        tinygDriver.write(CommandManager.CMD_APPLY_HOME_Z_AXIS);
+                        break;
+                    case "a":
+                        tinygDriver.write(CommandManager.CMD_APPLY_HOME_A_AXIS);
+                        break;
+                }
+            } catch (Exception ex) {
+                logger.error("Exception in handleHomeAxisClick for Axis: " + _axis + " " + ex.getMessage());
+            }
+        }
+        tgfx.Main.postConsoleMessage("[+]Homing " + _axis.toUpperCase() + " Axis...\n");
+    }
+
+    @FXML
+    private void handleZeroAxisClick(ActionEvent evt) {
+        MenuItem m = (MenuItem) evt.getSource();
+        String _axis = String.valueOf(m.getId().charAt(0));
+        if (tinygDriver.isConnected().get()) {
+            Draw2d.setFirstDraw(true);  //We set this so we do not draw lines for the previous position to the new zero.
+            try {
+                switch (_axis) {
+                    case "x":
+                        tinygDriver.write(CommandManager.CMD_APPLY_ZERO_X_AXIS);
+                        break;
+                    case "y":
+                        tinygDriver.write(CommandManager.CMD_APPLY_ZERO_Y_AXIS);
+                        break;
+                    case "z":
+                        tinygDriver.write(CommandManager.CMD_APPLY_ZERO_Z_AXIS);
+                        break;
+                    case "a":
+                        tinygDriver.write(CommandManager.CMD_APPLY_ZERO_A_AXIS);
+                        break;
+                }
+            } catch (Exception ex) {
+                logger.error("Exception in handleZeroAxisClick for Axis: " + _axis + " " + ex.getMessage());
+            }
+        }
+        tgfx.Main.postConsoleMessage("[+]Zeroed " + _axis.toUpperCase() + " Axis...\n");
+
+    }
+
+    @FXML
+    private void handleDroMouseClick(MouseEvent me) {
+        if (me.isSecondaryButtonDown()) { //Check to see if its a Right Click
+            String t;
+            String _axis;
+            Lcd l;
+            l = (Lcd) me.getSource();
+            t = String.valueOf(l.idProperty().get().charAt(0));
         }
     }
 
