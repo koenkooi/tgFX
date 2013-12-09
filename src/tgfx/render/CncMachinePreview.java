@@ -126,7 +126,7 @@ public class CncMachinePreview extends Pane {
                         @Override
                         public void handle(ActionEvent t) {
                             Draw2d.setFirstDraw(true); //We do not want to draw a line from our previous position
-                            TinygDriver.getInstance().cmdManager.setMachinePosition(getNormalizedX(me.getX()), getNormalizedY(me.getY()));
+                            TinygDriver.getInstance().getCmdManager().setMachinePosition(getNormalizedX(me.getX()), getNormalizedY(me.getY()));
                             Draw2d.setFirstDraw(true); //This allows us to move our drawing to a new place without drawing a line from the old.
                             try {
                                 TinygDriver.getInstance().write(CommandManager.CMD_APPLY_SYSTEM_ZERO_ALL_AXES);

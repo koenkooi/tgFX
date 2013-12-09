@@ -99,9 +99,9 @@ public class ResponseParser extends Observable implements Runnable {
                         message[1] = "[+]JSON Response Detected... Leaving Text mode..  Querying System State....\n";
                         notifyObservers(message);
                         try {
-                            TinygDriver.getInstance().cmdManager.queryAllMachineSettings();
-                            TinygDriver.getInstance().cmdManager.queryAllHardwareAxisSettings();
-                            TinygDriver.getInstance().cmdManager.queryAllMotorSettings();
+                            TinygDriver.getInstance().getCmdManager().queryAllMachineSettings();
+                            TinygDriver.getInstance().getCmdManager().queryAllHardwareAxisSettings();
+                            TinygDriver.getInstance().getCmdManager().queryAllMotorSettings();
                         } catch (Exception ex) {
                             logger.error("Error leaving Text mode and querying Motor, Machine and Axis Settings.");
                         }
@@ -148,7 +148,7 @@ public class ResponseParser extends Observable implements Runnable {
                     if (key.equals("f")) {
                         parseFooter(js.getJSONArray("f"));  //This is very important.  We break out our response footer.. error codes.. bytes availble in hardware buffer etc.               
                     } else {
-                        responseCommand rc = TinygDriver.getInstance().mneManager.lookupSingleGroupMaster(key, pg);
+                        responseCommand rc = TinygDriver.getInstance().getMneManager().lookupSingleGroupMaster(key, pg);
                         if (rc == null) { //This happens when a new mnemonic has been added to the tinyG firmware but not added to tgFX's MnemonicManger
                             //This is the error case
                             logger.error("Mnemonic Lookup Failed in applySettingsMasterGroup. \n\tMake sure there are not new elements added to TinyG and not to the MnemonicManager Class.\n\tMNEMONIC FAILED: " + key);
@@ -228,15 +228,15 @@ public class ResponseParser extends Observable implements Runnable {
                             notifyObservers(message);
                             break;
                         case "rx":
-                            TinygDriver.getInstance().serialWriter.setBuffer(js.getInt(key));
+                            TinygDriver.getInstance().getSerialWriter().setBuffer(js.getInt(key));
                             break;
                         default:
-                            if (TinygDriver.getInstance().mneManager.isMasterGroupObject(key)) {
+                            if (TinygDriver.getInstance().getMneManager().isMasterGroupObject(key)) {
                                 //                            logger.info("Group Status Report Detected: " + key);
                                 applySettingMasterGroup(js.getJSONObject(key), key);
                                 continue;
                             }
-                            responseCommand rc = TinygDriver.getInstance().mneManager.lookupSingleGroup(key);
+                            responseCommand rc = TinygDriver.getInstance().getMneManager().lookupSingleGroup(key);
                             rc.setSettingValue(js.get(key).toString());
                             parentGroup = rc.getSettingParent();
                             applySettings(rc.buildJsonObject(), rc.getSettingParent()); //we will supply the parent object name for each key pair
@@ -434,7 +434,7 @@ public class ResponseParser extends Observable implements Runnable {
             default:
                 //This is for single settings xfr, 1tr etc...
                 //This is pretty ugly but it gets the key and the value. For single values.
-                responseCommand rc = TinygDriver.getInstance().mneManager.lookupSingleGroup(pg);
+                responseCommand rc = TinygDriver.getInstance().getMneManager().lookupSingleGroup(pg);
                 rc.setSettingValue(String.valueOf(js.get(js.keys().next().toString())));
                 logger.info("Single Key Value: " + rc.getSettingParent() + rc.getSettingKey() + rc.getSettingValue());
                 this.applySetting(rc.buildJsonObject()); //We pass the new json object we created from the string above
@@ -465,13 +465,13 @@ public class ResponseParser extends Observable implements Runnable {
             responseFooter.setCheckSum(footerValues.getInt(FOOTER_ELEMENT_STATUS_CODE));
             //Out footer object is not populated
 
-            int beforeBytesReturned = TinygDriver.getInstance().serialWriter.getBufferValue();
+            int beforeBytesReturned = TinygDriver.getInstance().getSerialWriter().getBufferValue();
             //Make sure we do not add bytes to a already full buffer
             if (beforeBytesReturned != TinygDriver.MAX_BUFFER) {
-                TinygDriver.getInstance().serialWriter.addBytesReturnedToBuffer(responseFooter.getRxRecvd());
-                int afterBytesReturned = TinygDriver.getInstance().serialWriter.getBufferValue();
+                TinygDriver.getInstance().getSerialWriter().addBytesReturnedToBuffer(responseFooter.getRxRecvd());
+                int afterBytesReturned = TinygDriver.getInstance().getSerialWriter().getBufferValue();
                 logger.debug("Returned " + responseFooter.getRxRecvd() + " to buffer... Buffer was " + beforeBytesReturned + " is now " + afterBytesReturned);
-                TinygDriver.getInstance().serialWriter.notifyAck();  //We let our serialWriter thread know we have added some space to the buffer.
+                TinygDriver.getInstance().getSerialWriter().notifyAck();  //We let our serialWriter thread know we have added some space to the buffer.
                 //Lets tell the UI the new size of the buffer
                 message[0] = "BUFFER_UPDATE";
                 message[1] = String.valueOf(afterBytesReturned);

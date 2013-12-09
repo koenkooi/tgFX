@@ -74,7 +74,7 @@ public class TinyGConfigController implements Initializable {
         if (TinygDriver.getInstance().isConnected().get()) {
             tgfx.Main.postConsoleMessage("[+]Enabling All Axis.... Motors Live!.\n");
             logger.info("Enabling All Axis");
-            TinygDriver.getInstance().cmdManager.enableAllAxis();
+            TinygDriver.getInstance().getCmdManager().enableAllAxis();
 
         } else {
             tgfx.Main.postConsoleMessage("[!]TinyG is Not Connected...\n");
@@ -87,7 +87,7 @@ public class TinyGConfigController implements Initializable {
         if (TinygDriver.getInstance().isConnected().get()) {
             tgfx.Main.postConsoleMessage("[+]Inhibiting All Axis.... Motors Inhibited... However always verify!\n");
             logger.info("Inhibiting All Axis");
-            TinygDriver.getInstance().cmdManager.inhibitAllAxis();
+            TinygDriver.getInstance().getCmdManager().inhibitAllAxis();
 
         } else {
             tgfx.Main.postConsoleMessage("[!]TinyG is Not Connected...\n");

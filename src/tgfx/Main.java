@@ -65,7 +65,7 @@ public class Main extends Stage implements Initializable, Observer {
     private boolean buildChecked = false;  //this is checked apon initial connect.  Once this is set to true
     //if a buildVersion changed message comes in it will not refire onConnect2() again and again
     static final Logger logger = Logger.getLogger(Main.class);
-    private TinygDriver tg = TinygDriver.getInstance();
+    private final TinygDriver tinyg = TinygDriver.getInstance();
     final static ResourceBundle rb = ResourceBundle.getBundle("version");   //Used to track build date and build number
     @FXML
     private Button Connect;
@@ -141,7 +141,7 @@ public class Main extends Stage implements Initializable, Observer {
     private void reScanSerial() {
         serialPorts.getItems().clear();
         String portArray[];
-        portArray = tg.listSerialPorts();
+        portArray = tinyg.listSerialPorts();
         serialPorts.getItems().addAll(Arrays.asList(portArray));
     }
 
@@ -161,14 +161,14 @@ public class Main extends Stage implements Initializable, Observer {
 //                        Timer timer = new Timer("connectTimout");
 
                         GcodeTabController.setGcodeTextTemp("Attempting to Connect to TinyG.");
-                        TinygDriver.getInstance().serialWriter.notifyAck(); //If the serialWriter is in a wait state.. wake it up
-                        TinygDriver.getInstance().write(CommandManager.CMD_APPLY_NOOP); //Just waking things up.
-                        TinygDriver.getInstance().write(CommandManager.CMD_APPLY_NOOP);
-                        TinygDriver.getInstance().write(CommandManager.CMD_APPLY_NOOP);
+                        TinygDriver.getInstance().getSerialWriter().notifyAck(); //If the serialWriter is in a wait state.. wake it up
+                        tinyg.write(CommandManager.CMD_APPLY_NOOP); //Just waking things up.
+                        tinyg.write(CommandManager.CMD_APPLY_NOOP);
+                        tinyg.write(CommandManager.CMD_APPLY_NOOP);
 
-                        TinygDriver.getInstance().write(CommandManager.CMD_QUERY_HARDWARE_PLATFORM);
-                        TinygDriver.getInstance().write(CommandManager.CMD_QUERY_HARDWARE_VERSION);
-                        TinygDriver.getInstance().write(CommandManager.CMD_QUERY_HARDWARE_BUILD_NUMBER);
+                        tinyg.write(CommandManager.CMD_QUERY_HARDWARE_PLATFORM);
+                        tinyg.write(CommandManager.CMD_QUERY_HARDWARE_VERSION);
+                        tinyg.write(CommandManager.CMD_QUERY_HARDWARE_BUILD_NUMBER);
                         //Thread.sleep(delayValue);  //Should not need this for query operations
                         postConsoleMessage("Getting TinyG Firmware Build Version....");
                     } catch (Exception ex) {
@@ -198,15 +198,15 @@ public class Main extends Stage implements Initializable, Observer {
                         /*####################################
                          *Priority Write's Must Observe the delays or you will smash TinyG as it goes into a "disable interrupt mode" to write values to EEPROM 
                          #################################### */
-                        tg.priorityWrite(CommandManager.CMD_APPLY_JSON_VOBERSITY);
+                        tinyg.priorityWrite(CommandManager.CMD_APPLY_JSON_VOBERSITY);
                         Thread.sleep(delayValue);
-                        tg.priorityWrite(CommandManager.CMD_APPLY_STATUS_UPDATE_INTERVAL);
+                        tinyg.priorityWrite(CommandManager.CMD_APPLY_STATUS_UPDATE_INTERVAL);
                         Thread.sleep(delayValue);
-                        tg.priorityWrite(CommandManager.CMD_APPLY_TEXT_VOBERSITY);
+                        tinyg.priorityWrite(CommandManager.CMD_APPLY_TEXT_VOBERSITY);
                         Thread.sleep(delayValue);
-                        tg.priorityWrite(CommandManager.CMD_APPLY_FLOWCONTROL);
+                        tinyg.priorityWrite(CommandManager.CMD_APPLY_FLOWCONTROL);
                         Thread.sleep(delayValue);
-                        tg.priorityWrite(CommandManager.CMD_APPLY_STATUS_REPORT_FORMAT);
+                        tinyg.priorityWrite(CommandManager.CMD_APPLY_STATUS_REPORT_FORMAT);
                         Thread.sleep(600); //Setting the status report takes some time!  Just leave this alone.  This is a hardware limit..
                         //writing to the eeprom (so many values) is troublesome :)  Like geese.. (this one is for alden)
 
@@ -214,15 +214,15 @@ public class Main extends Stage implements Initializable, Observer {
                         /*####################################
                          *Query Code gets the regular write method
                          #################################### */
-                        tg.cmdManager.queryAllMachineSettings();                    //SIXtH
+                        tinyg.getCmdManager().queryAllMachineSettings();                    //SIXtH
                         Thread.sleep(delayValue);
-                        tg.cmdManager.queryStatusReport();
+                        tinyg.getCmdManager().queryStatusReport();
                         Thread.sleep(delayValue);
-                        tg.cmdManager.queryAllMotorSettings();
+                        tinyg.getCmdManager().queryAllMotorSettings();
                         Thread.sleep(delayValue);
-                        tg.cmdManager.queryAllHardwareAxisSettings();
+                        tinyg.getCmdManager().queryAllHardwareAxisSettings();
                         Thread.sleep(delayValue);
-                        tg.write(CommandManager.CMD_APPLY_TEXT_VOBERSITY);
+                        tinyg.write(CommandManager.CMD_APPLY_TEXT_VOBERSITY);
 
                         tgfx.ui.gcode.GcodeTabController.setCNCMachineVisible(true); //Once we connected we should show the drawing enevlope. 
                         Main.postConsoleMessage("Showing CNC Machine Preview...");
@@ -244,18 +244,18 @@ public class Main extends Stage implements Initializable, Observer {
     }
 
     public void onDisconnectActions() throws IOException, JSONException {
-        TinygDriver.getInstance().getMachine().setFirmwareBuild(0.0);
-        TinygDriver.getInstance().getMachine().setFirmwareBuild(0.0D);
-        TinygDriver.getInstance().getMachine().getFirmwareVersion().set("");
-        TinygDriver.getInstance().getMachine().getM_state().set("");
-        TinygDriver.getInstance().getMachine().setLineNumber(new SimpleIntegerProperty(0));
-        TinygDriver.getInstance().getMachine().setMotionMode(0);
+        tinyg.getMachine().setFirmwareBuild(0.0);
+        tinyg.getMachine().setFirmwareBuild(0.0D);
+        tinyg.getMachine().getFirmwareVersion().set("");
+        tinyg.getMachine().getM_state().set("");
+        tinyg.getMachine().setLineNumber(new SimpleIntegerProperty(0));
+        tinyg.getMachine().setMotionMode(0);
         Draw2d.setFirstDraw(true);
         tgfx.ui.gcode.GcodeTabController.setCNCMachineVisible(false);  //Once we disconnect we hide our gcode preview.
 
-        TinygDriver.getInstance().serialWriter.resetBuffer();
-        TinygDriver.getInstance().serialWriter.clearQueueBuffer();
-        TinygDriver.getInstance().serialWriter.notifyAck();
+        tinyg.getSerialWriter().resetBuffer();
+        tinyg.getSerialWriter().clearQueueBuffer();
+        tinyg.getSerialWriter().notifyAck();
         buildChecked = false; //Reset this so we can enable checking the build again on disconnect
         GcodeTabController.setGcodeTextTemp("TinyG Disconnected.");
 
@@ -300,7 +300,7 @@ public class Main extends Stage implements Initializable, Observer {
                 switch (ROUTING_KEY) {
                     case ("STATUS_REPORT"):
                         tgfx.ui.gcode.GcodeTabController.drawCanvasUpdate();                         
-                        int rspLine = TinygDriver.getInstance().getMachine().getLineNumber();
+                        int rspLine = tinyg.getMachine().getLineNumber();
 
                         // Scroll Gcode view to stay in synch with TinyG acks during file send
                         if (rspLine != oldRspLine && GcodeTabController.isSendingFile.get()) {
@@ -343,7 +343,7 @@ public class Main extends Stage implements Initializable, Observer {
                         break;
                     case ("BUILD_OK"):
                         //TinyG's build version is up to date to run tgfx.
-                        if (!buildChecked && tg.isConnected().get()) {
+                        if (!buildChecked && tinyg.isConnected().get()) {
                             //we do this once on connect, disconnect will reset this flag
                             onConnectActionsTwo();
 
@@ -381,8 +381,8 @@ public class Main extends Stage implements Initializable, Observer {
 
                                 MonologFX mono = MonologFXBuilder.create()
                                         .titleText("TinyG Firware Build Outdated...")
-                                        .message("Your TinyG firmware is too old to be used with tgFX. \nYour build version: " + tg.getMachine().getFirmwareBuild() + "\n"
-                                        + "Minmal Needed Version: " + tg.hardwarePlatform.getMinimalBuildVersion().toString() + "\n\n"
+                                        .message("Your TinyG firmware is too old to be used with tgFX. \nYour build version: " + tinyg.getMachine().getFirmwareBuild() + "\n"
+                                        + "Minmal Needed Version: " + tinyg.getHardwarePlatform().getMinimalBuildVersion().toString() + "\n\n"
                                         + "Click ok to attempt to auto upgrade your TinyG. \nA Internet Connection is Required."
                                         + "\nClicking No will exit tgFX.")
                                         .button(btnYes)
@@ -411,14 +411,14 @@ public class Main extends Stage implements Initializable, Observer {
                                             @Override
                                             public void run() {
                                                 webEngFirmware.load("https://github.com/synthetos/TinyG/wiki/TinyG-Boot-Loader#wiki-updating");
-                                                tg.disconnect();
+                                                tinyg.disconnect();
                                                 Connect.setText("Connect");
                                             }
                                         });
                                         break;
                                     case NO:
                                         logger.info("Clicked No");
-                                        tg.disconnect();
+                                        tinyg.disconnect();
                                         System.exit(0);
                                         break;
                                 }
@@ -472,25 +472,25 @@ public class Main extends Stage implements Initializable, Observer {
          *MISC INIT CODE 
          #################################### */
 
-        tg.resParse.addObserver(this);  //Add the tinygdriver to this observer
-        tg.addObserver(this);
+        tinyg.getResParse().addObserver(this);  //Add the tinygdriver to this observer
+        tinyg.addObserver(this);
         this.reScanSerial();            //Populate our serial ports
         GcodeTabController.setGcodeText("TinyG Disconnected.");
 
         //This disables the UI if we are not connected.
-        consoleVBox.disableProperty().bind(TinygDriver.getInstance().connectionStatus.not());
-        topTabPane.disableProperty().bind(TinygDriver.getInstance().connectionStatus.not());
+        consoleVBox.disableProperty().bind(tinyg.getConnectionStatus().not());
+        topTabPane.disableProperty().bind(tinyg.getConnectionStatus().not());
 
         /*######################################
          * THREAD INITS
          ######################################*/
 
-        Thread serialWriterThread = new Thread(tg.serialWriter);
+        Thread serialWriterThread = new Thread(tinyg.getSerialWriter());
 
         serialWriterThread.setName("SerialWriter");
         serialWriterThread.setDaemon(true);
         serialWriterThread.start();
-        Thread threadResponseParser = new Thread(tg.resParse);
+        Thread threadResponseParser = new Thread(tinyg.getResParse());
 
         threadResponseParser.setDaemon(true);
         threadResponseParser.setName("ResponseParser");
@@ -523,7 +523,7 @@ public class Main extends Stage implements Initializable, Observer {
         /*#######################################################
          * BINDINGS
          * #####################################################*/
-        Machine m = TinygDriver.getInstance().getMachine();
+        Machine m = tinyg.getMachine();
         srMomo.textProperty().bind(m.getMotionMode());
         srVer.textProperty().bind(m.getFirmwareVersion());
         srBuild.textProperty().bindBidirectional( m.getFirmwareBuild(), sc);

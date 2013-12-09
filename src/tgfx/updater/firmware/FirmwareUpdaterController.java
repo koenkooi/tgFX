@@ -83,7 +83,7 @@ public class FirmwareUpdaterController implements Initializable {
                 //Download TinyG.hex
                 URL url;
                 try {
-                    url = new URL(TinygDriver.getInstance().hardwarePlatform.getFirmwareUrl());
+                    url = new URL(TinygDriver.getInstance().getHardwarePlatform().getFirmwareUrl());
                     URLConnection urlConnection = url.openConnection();
                     Main.print("Opened Connection to Github");
                     Main.postConsoleMessage("Downloading tinyg.hex file from github.com");
@@ -138,7 +138,7 @@ public class FirmwareUpdaterController implements Initializable {
             @Override
             public void run() {
                 try {
-                    URL url = new URL(TinygDriver.getInstance().hardwarePlatform.getLatestVersionUrl());
+                    URL url = new URL(TinygDriver.getInstance().getHardwarePlatform().getLatestVersionUrl());
                     URLConnection urlConnection = url.openConnection();
 
                     //                    
@@ -201,7 +201,7 @@ public class FirmwareUpdaterController implements Initializable {
                         });
 
                     } else {
-                        Main.postConsoleMessage("Your " + TinygDriver.getInstance().hardwarePlatform.getPlatformName() + "'s firmware is up to date...\n");
+                        Main.postConsoleMessage("Your " + TinygDriver.getInstance().getHardwarePlatform().getPlatformName() + "'s firmware is up to date...\n");
                     }
 
 //                    currentVal.valueOf(avrdudePath)

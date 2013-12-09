@@ -99,14 +99,14 @@ public class CommandManager {
     public static void stopTinyGMovement() throws Exception {
         logger.info("[!]Stopping Job Clearing Serial Queue...\n");
         TinygDriver.getInstance().priorityWrite(CommandManager.CMD_APPLY_PAUSE);
-        TinygDriver.getInstance().serialWriter.clearQueueBuffer();
+        TinygDriver.getInstance().getSerialWriter().clearQueueBuffer();
         TinygDriver.getInstance().priorityWrite(CommandManager.CMD_APPLY_QUEUE_FLUSH);
         tgfx.Main.postConsoleMessage("[!]Stopping Job Clearing Serial Queue...\n");
     }
 
     public static void stopJogMovement() throws Exception {
         //Do not mess with this order.
-        TinygDriver.getInstance().serialWriter.clearQueueBuffer();
+        TinygDriver.getInstance().getSerialWriter().clearQueueBuffer();
         TinygDriver.getInstance().priorityWrite(CommandManager.CMD_APPLY_PAUSE);
         Thread.sleep(40);
         TinygDriver.getInstance().priorityWrite(CommandManager.CMD_APPLY_QUEUE_FLUSH);

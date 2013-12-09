@@ -17,7 +17,7 @@ import tgfx.ui.gcode.GcodeTabController;
  */
 public class SerialWriter implements Runnable {
 
-    private static org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(SerialWriter.class);
+    private static Logger logger = Logger.getLogger(SerialWriter.class);
     private BlockingQueue queue;
     private boolean RUN = true;
     private boolean cleared  = false;

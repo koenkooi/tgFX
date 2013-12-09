@@ -284,7 +284,7 @@ public class GcodeTabController implements Initializable {
         /*######################################
          * BINDINGS CODE
          ######################################*/
-        gcodeTabControllerHBox.disableProperty().bind(TinygDriver.getInstance().connectionStatus.not());
+        gcodeTabControllerHBox.disableProperty().bind(TinygDriver.getInstance().getConnectionStatus().not());
 
 
         /*######################################
@@ -329,7 +329,7 @@ public class GcodeTabController implements Initializable {
                 tgfx.Main.postConsoleMessage("[+]Gcode Unit Mode Changed to: " + tmp + "\n");
 
                 try {
-                    TinygDriver.getInstance().serialWriter.setThrottled(true);
+                    TinygDriver.getInstance().getSerialWriter().setThrottled(true);
                     TinygDriver.getInstance().priorityWrite(CommandManager.CMD_QUERY_MOTOR_1_SETTINGS);
                     TinygDriver.getInstance().priorityWrite(CommandManager.CMD_QUERY_MOTOR_2_SETTINGS);
                     TinygDriver.getInstance().priorityWrite(CommandManager.CMD_QUERY_MOTOR_3_SETTINGS);
@@ -342,7 +342,7 @@ public class GcodeTabController implements Initializable {
                     TinygDriver.getInstance().priorityWrite(CommandManager.CMD_QUERY_AXIS_B);
                     TinygDriver.getInstance().priorityWrite(CommandManager.CMD_QUERY_AXIS_C);
                     Thread.sleep(400);
-                    TinygDriver.getInstance().serialWriter.setThrottled(false);
+                    TinygDriver.getInstance().getSerialWriter().setThrottled(false);
                 } catch (Exception ex) {
                     logger.error("Error querying tg model state on gcode unit change.  GCodeTabController.java binding section.");
                 }

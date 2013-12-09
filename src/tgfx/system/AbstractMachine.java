@@ -642,7 +642,7 @@ abstract void initialize();
     public void setHardwareVersion(String hardwareVersion) {
         int h = Integer.valueOf(hardwareVersion);
 //        this.hardwareVersion.set(hardwareVersion);
-        TinygDriver.getInstance().hardwarePlatformManager.setHardwarePlatformByVersionNumber(h);
+        TinygDriver.getInstance().getHardwarePlatformManager().setHardwarePlatformByVersionNumber(h);
     }
 
 //    public static enum motion_modes {
@@ -1219,7 +1219,7 @@ abstract void initialize();
 
                     case (MnemonicManager.MNEMONIC_SYSTEM_HARDWARE_VERSION):
                         getLogger().info("[APPLIED:" + rc.getSettingParent() + " " + rc.getSettingKey() + ":" + rc.getSettingValue());
-                        TinygDriver.getInstance().hardwarePlatformManager.setHardwarePlatformByVersionNumber(Integer.valueOf(rc.getSettingValue()));
+                        TinygDriver.getInstance().getHardwarePlatformManager().setHardwarePlatformByVersionNumber(Integer.valueOf(rc.getSettingValue()));
                         break;
 
                     case (MnemonicManager.MNEMONIC_SYSTEM_ENABLE_ECHO):
@@ -1305,8 +1305,8 @@ abstract void initialize();
                         String[] message = new String[2];
                         message[0] = "MACHINE_UPDATE";
                         message[1] = null;
-                        TinygDriver.getInstance().resParse.set_Changed();
-                        TinygDriver.getInstance().resParse.notifyObservers(message);
+                        TinygDriver.getInstance().getResParse().set_Changed();
+                        TinygDriver.getInstance().getResParse().notifyObservers(message);
 
 
                         break;
