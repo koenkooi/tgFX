@@ -8,7 +8,6 @@ package tgfx.tinyg;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.apache.log4j.Logger;
-import tgfx.Main;
 /**
  * The <code>TinygDriverFactory</code> class implement a simple factory that only creates on TinygDriver object
  * @author pfarrell
