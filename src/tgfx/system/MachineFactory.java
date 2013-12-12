@@ -5,6 +5,7 @@
 package tgfx.system;
 
 import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 /**
  * The <code> MachineFactory</code> class creates Machines for us. It completely
  * hides the fact that the Machine is really one instance.
@@ -13,7 +14,7 @@ import java.util.concurrent.locks.ReadWriteLock;
  */
 public class MachineFactory {
     private static Machine theMachine;
-    private static ReadWriteLock lock;
+    private static ReadWriteLock lock = new ReentrantReadWriteLock();
 /**
  * gets a machine.
  * @return a nice machine
